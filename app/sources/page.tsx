@@ -79,56 +79,32 @@ export default function SourcesPage() {
             </p>
             <ul>
               <li>$1,000 = 1 CSS px² (1px × 1px square)</li>
+              <li>$83,730 (Median US household income) = 83.73 CSS px² (~9.15px × 9.15px square)</li>
               <li>$1,000,000 = 1,000 CSS px² (~31.62px × 31.62px square)</li>
-              <li>$1,000,000,000 = 1,000,000 CSS px² (1,000px × 1,000px square, or 2,500px × 400px corridor)</li>
-              <li>$892,000,000,000 (Musk) = 892,000,000 CSS px² (2,230,000px × 400px corridor)</li>
-              <li>$6,600,000,000,000 (Forbes 400) = 6,600,000,000 CSS px² (16,500,000px × 400px corridor)</li>
-              <li>$20,100,000,000,000 (Global Billionaires) = 20,100,000,000 CSS px² (50,250,000px × 400px corridor)</li>
+              <li>$3,349,200 (40 years of median income) = 3,349.2 CSS px² (~57.87px × 57.87px square)</li>
+              <li>$1,000,000,000 = 1,000,000 CSS px² (2,000px × 500px corridor on desktop)</li>
+              <li>$10,000,000,000 (1% of $1T) = 10,000,000 CSS px² (20,000px × 500px corridor on desktop)</li>
+              <li>$892,000,000,000 (Musk estimate) = 892,000,000 CSS px² (1,784,000px × 500px corridor on desktop)</li>
+              <li>$1,000,000,000,000 = 1,000,000,000 CSS px² (2,000,000px × 500px corridor on desktop)</li>
+              <li>$6,600,000,000,000 (Forbes 400) = 6,600,000,000 CSS px² (13,200,000px × 500px corridor on desktop)</li>
+              <li>$400,000,000,000 (Reserved $1B for 400 members) = 400,000,000 CSS px² (800,000px × 500px corridor, 6.06%)</li>
+              <li>$6,200,000,000,000 (Remainder) = 6,200,000,000 CSS px² (12,400,000px × 500px corridor, 93.94%)</li>
             </ul>
 
             <h3>2. Area Preservation Between Desktop and Mobile</h3>
             <p>
-              Desktop exploration uses a horizontal corridor with fixed height <code>H = 400px</code>, where width <code>W = Area / 400</code>.
+              Desktop exploration uses a horizontal corridor with fixed height <code>H = 500px</code>, where width <code>W = Area / 500</code>.
               Mobile exploration uses a vertical corridor with fixed width <code>W = 300px</code>, where height <code>H = Area / 300</code>.
             </p>
             <p>
-              Because <code>Area = W × H = (Area / 400) × 400 = 300 × (Area / 300)</code>, mathematical physical area is identical across every viewport and orientation.
+              Because <code>Area = W × H = (Area / 500) × 500 = 300 × (Area / 300)</code>, mathematical physical area is preserved identically across every viewport and orientation.
             </p>
 
-            <h3>3. Viewport Virtualization</h3>
+            <h3>3. Viewport Virtualization & Bounded Geometry</h3>
             <p>
-              Trillion-dollar geometry at true scale exceeds modern browser DOM element size caps (16,777,216 or 33,554,432 pixels). 
-              The application uses bounded native scrolling segments (500,000 pixels maximum per segment) with seamless coordinate rebasing and viewport-only canvas rendering.
+              Trillion-dollar geometry at true scale exceeds modern browser DOM layout limits.
+              The application uses bounded virtualized viewport projection: elements rendered in the DOM are strictly bounded to the visible screen (&lt; 2,000px), eliminating coordinate overflow while delivering an unbroken, continuous visual journey.
             </p>
-          </div>
-        </section>
-
-        {/* Editorial Caveats & Defensibility */}
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Defensible Editorial Standards & Caveats</h2>
-          <div className={styles.prose}>
-            <div className={styles.alertCard}>
-              <strong>Key Distinctions:</strong>
-              <ol className={styles.caveatList}>
-                <li>
-                  <strong>Net Worth is Not a Cash Balance:</strong> A billionaire’s net worth consists primarily of corporate equity (such as shares of Tesla, SpaceX, or Amazon). 
-                  Attempting to liquidate all assets at once would depress stock prices and incur capital gains taxes. These figures represent relative economic magnitude, not a liquidation model or tax-revenue estimate.
-                </li>
-                <li>
-                  <strong>Annual Budgets Recur:</strong> The World Food Programme’s operational requirement ($13B) and the global malaria target ($9.3B) are annual operational needs, not one-time fees to permanently end hunger or disease.
-                </li>
-                <li>
-                  <strong>Hypothetical Unit Costs are Model Benchmarks:</strong> The $300,000 home, $100,000 annual teacher employment cost, $50,000 scholarship, and $10,000 emergency grant are benchmark assumptions used to illustrate relative scale.
-                </li>
-                <li>
-                  <strong>No Summing of Overlapping Groups:</strong> Elon Musk and Jeff Bezos are members of the Forbes 400, and the Forbes 400 are members of the 3,428 global billionaires. 
-                  These groups must never be summed together.
-                </li>
-                <li>
-                  <strong>No Inflation Adjustments Across Snapshot Dates:</strong> Metric observations span 2022 to 2026. Each metric is reported exactly as cited in its official release without synthetic inflation indexing.
-                </li>
-              </ol>
-            </div>
           </div>
         </section>
 

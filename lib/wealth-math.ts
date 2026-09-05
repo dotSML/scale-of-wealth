@@ -12,12 +12,12 @@
 import {
   SNAPSHOT_DATA,
   CANONICAL_DOLLARS_PER_PIXEL_SQ,
-  DAYS_PER_YEAR,
 } from '@/data/snapshot';
 
-export const DESKTOP_CORRIDOR_HEIGHT = 400; // CSS px
-export const MOBILE_CORRIDOR_WIDTH = 300;   // CSS px
+export const DESKTOP_CORRIDOR_HEIGHT = 500; // Canonical CSS px
+export const MOBILE_CORRIDOR_WIDTH = 300;   // Canonical mobile CSS px
 export const SEGMENT_MAX_PIXELS = 500_000;  // Safe boundary for native browser layout
+export const DAYS_PER_YEAR = 365.25;
 
 export interface RectangleDimensions {
   width: number;
@@ -90,13 +90,13 @@ export function areaToMobileCorridor(
 
 /**
  * Shared function to calculate the household reference marker dimensions.
- * Based on US Median Family Net Worth ($192,900 from Federal Reserve SCF).
- * Area = 192,900 / 1,000 = 192.9 px².
- * Dimensions = sqrt(192.9) ≈ 13.8888... px square.
+ * Based on US Median Household Income ($83,730 from US Census Bureau).
+ * Area = 83,730 / 1,000 = 83.73 px².
+ * Dimensions = sqrt(83.73) ≈ 9.15px square.
  */
 export function getHouseholdMarkerDimensions(): RectangleDimensions {
-  const medianNetWorth = SNAPSHOT_DATA.usMedianFamilyNetWorth.value;
-  const area = dollarsToArea(medianNetWorth);
+  const medianIncome = SNAPSHOT_DATA.usMedianHouseholdIncome.value;
+  const area = dollarsToArea(medianIncome);
   return areaToSquareDimensions(area);
 }
 
@@ -150,32 +150,6 @@ export function wealthRemainingAfterLoss(fortune: number, lossFraction: number):
 }
 
 /**
- * Beat 18 Derivation:
- * A hypothetical donation from a billionaire expressed as the exact same percentage
- * of net worth for a reference household.
- * 
- * (donation / donorNetWorth) * householdNetWorth
- */
-export function proportionalDonation(
-  donation: number,
-  donorNetWorth: number,
-  householdNetWorth: number
-): {
-  percentage: number;
-  equivalentAmount: number;
-} {
-  if (donorNetWorth <= 0) throw new Error('Donor net worth must be positive');
-  const fraction = donation / donorNetWorth;
-  const percentage = fraction * 100;
-  const equivalentAmount = fraction * householdNetWorth;
-  return {
-    percentage,
-    equivalentAmount,
-  };
-}
-
-/**
- * Beat 29:
  * Forbes 400 aggregate wealth remaining after reserving $1 billion per person.
  */
 export function forbes400RemainingAfterOneBillionReserve(
@@ -194,85 +168,6 @@ export function forbes400RemainingAfterOneBillionReserve(
     totalReserved,
     remainingAggregate,
     percentageRemaining,
-  };
-}
-
-export interface FinalePackageItem {
-  id: string;
-  name: string;
-  unitCost: number;
-  quantity: number;
-  totalCost: number;
-  color: string;
-}
-
-/**
- * Beat 30:
- * The Grand Finale combined hypothetical social package carved out of the Forbes 400.
- * 
- * - 100,000 homes at $300,000 = $30B
- * - 100,000 teaching positions for 10 years at $100,000/yr = $100B
- * - 1,000,000 college scholarships at $50,000 = $50B
- * - 1,000,000 household grants at $10,000 = $10B
- * Total = $190B
- */
-export function calculateFinalePackage(
-  forbes400Total = SNAPSHOT_DATA.forbes400Wealth.value
-): {
-  items: FinalePackageItem[];
-  packageTotal: number;
-  forbes400Total: number;
-  packagePercentage: number;
-  remainderAggregate: number;
-  remainderPercentage: number;
-} {
-  const items: FinalePackageItem[] = [
-    {
-      id: 'homes',
-      name: '100,000 homes ($300k each)',
-      unitCost: SNAPSHOT_DATA.hypotheticalHomeCost.value,
-      quantity: 100_000,
-      totalCost: 100_000 * SNAPSHOT_DATA.hypotheticalHomeCost.value, // $30B
-      color: '#f59e0b', // amber
-    },
-    {
-      id: 'teachers',
-      name: '100,000 teachers for 10 years ($100k/yr)',
-      unitCost: SNAPSHOT_DATA.teacherEmploymentCostAnnual.value * 10,
-      quantity: 100_000,
-      totalCost: 100_000 * (SNAPSHOT_DATA.teacherEmploymentCostAnnual.value * 10), // $100B
-      color: '#38bdf8', // sky blue
-    },
-    {
-      id: 'scholarships',
-      name: '1,000,000 scholarships ($50k each)',
-      unitCost: SNAPSHOT_DATA.hypotheticalScholarshipAmount.value,
-      quantity: 1_000_000,
-      totalCost: 1_000_000 * SNAPSHOT_DATA.hypotheticalScholarshipAmount.value, // $50B
-      color: '#a855f7', // purple
-    },
-    {
-      id: 'grants',
-      name: '1,000,000 direct household grants ($10k each)',
-      unitCost: SNAPSHOT_DATA.hypotheticalHouseholdGrantAmount.value,
-      quantity: 1_000_000,
-      totalCost: 1_000_000 * SNAPSHOT_DATA.hypotheticalHouseholdGrantAmount.value, // $10B
-      color: '#10b981', // emerald
-    },
-  ];
-
-  const packageTotal = items.reduce((sum, item) => sum + item.totalCost, 0); // $190B
-  const packagePercentage = (packageTotal / forbes400Total) * 100; // ~2.878788%
-  const remainderAggregate = forbes400Total - packageTotal; // $6.41T
-  const remainderPercentage = (remainderAggregate / forbes400Total) * 100; // ~97.1212%
-
-  return {
-    items,
-    packageTotal,
-    forbes400Total,
-    packagePercentage,
-    remainderAggregate,
-    remainderPercentage,
   };
 }
 
@@ -326,7 +221,7 @@ export function formatCurrency(
   if (compact) {
     if (amount >= 1_000_000_000_000) {
       const val = amount / 1_000_000_000_000;
-      const digits = precision ?? (val % 1 === 0 ? 0 : 2);
+      const digits = precision ?? (val % 1 === 0 ? 0 : (Number.isInteger(val * 10) ? 1 : 2));
       return `$${val.toFixed(digits)} trillion`;
     }
     if (amount >= 1_000_000_000) {

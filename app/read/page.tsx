@@ -1,31 +1,14 @@
 import React from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/common/Header';
-import { getStoryBeats } from '@/data/story';
-import {
-  formatCurrency,
-  calculateFinalePackage,
-} from '@/lib/wealth-math';
 import styles from './Read.module.css';
 
 export const metadata = {
-  title: 'The Scale of Wealth — Complete Narrative',
-  description: 'The complete long-form reading edition of The Scale of Wealth. Thirty comparisons documenting extreme wealth concentration through mathematics and physical proportions.',
+  title: 'The Scale of Wealth — Reading Edition',
+  description: 'The long-form narrative reading edition of The Scale of Wealth. Mathematics and physical proportions of extreme fortunes.',
 };
 
 export default function ReadPage() {
-  const beats = getStoryBeats();
-  const finale = calculateFinalePackage();
-
-  // Group beats by chapter
-  const chapters = [
-    { number: 1, title: 'Ordinary Money', beats: beats.filter((b) => b.chapter === 1) },
-    { number: 2, title: 'The Ladder', beats: beats.filter((b) => b.chapter === 2) },
-    { number: 3, title: 'Beyond a Lifetime', beats: beats.filter((b) => b.chapter === 3) },
-    { number: 4, title: 'Amounts That Change Lives', beats: beats.filter((b) => b.chapter === 4) },
-    { number: 5, title: 'Collective Scale', beats: beats.filter((b) => b.chapter === 5) },
-  ];
-
   return (
     <>
       <Header />
@@ -34,126 +17,147 @@ export default function ReadPage() {
           <div className={styles.kicker}>The Reading Edition</div>
           <h1 className={styles.mainTitle}>The Scale of Wealth</h1>
           <p className={styles.lead}>
-            Human intuition fails when numbers exceed ordinary experience. When we hear of hundreds of billions or trillions of dollars, the brain files them under the vague concept of “unimaginably rich.” 
-            This document sets down thirty physical comparisons using a strict mathematical baseline: <strong>one square pixel equals one thousand dollars</strong>.
+            Human intuition fails when numbers exceed ordinary experience. When we hear of hundreds of billions or trillions of dollars, the mind files them under the vague concept of “unimaginably rich.” 
+            This document sets down the narrative journey using a strict physical baseline: <strong>one square pixel equals one thousand dollars ($1,000)</strong>.
           </p>
           <div className={styles.metaBar}>
             <span>Committed Snapshot: 5 September 2026</span>
             <span>Scale: 1 px² = $1,000</span>
-            <Link href="/" className={styles.interactiveLink}>Launch Interactive Visual Explorer &rarr;</Link>
+            <Link href="/" className={styles.interactiveLink}>Launch Scale Visualizer &rarr;</Link>
           </div>
         </header>
 
-        {/* Table of Chapters */}
-        <nav className={styles.toc} aria-label="Table of Contents">
-          <div className={styles.tocTitle}>Chapters</div>
-          <ol className={styles.tocList}>
-            {chapters.map((ch) => (
-              <li key={ch.number}>
-                <a href={`#chapter-${ch.number}`}>
-                  Chapter {ch.number}: {ch.title}
-                </a>
-              </li>
-            ))}
-          </ol>
-        </nav>
-
-        {/* Narrative Chapters */}
         <div className={styles.content}>
-          {chapters.map((ch) => (
-            <section key={ch.number} id={`#chapter-${ch.number}`} className={styles.chapterSection}>
-              <div className={styles.chapterHeader}>
-                <span className={styles.chapterTag}>Chapter {ch.number}</span>
-                <h2 className={styles.chapterTitle}>{ch.title}</h2>
-              </div>
-
-              <div className={styles.beatsList}>
-                {ch.beats.map((beat) => (
-                  <article key={beat.id} id={beat.id} className={styles.beatCard}>
-                    <header className={styles.beatHeader}>
-                      <span className={styles.beatIndex}>Beat {beat.index} of 30</span>
-                      <h3 className={styles.beatTitle}>{beat.title}</h3>
-                      <div className={styles.beatHeadline}>{beat.headline}</div>
-                    </header>
-
-                    <div className={styles.beatBody}>
-                      {beat.copy.map((p, i) => (
-                        <p key={i}>{p}</p>
-                      ))}
-                    </div>
-
-                    {beat.derivedMetric && (
-                      <div className={styles.metricCallout}>
-                        <div className={styles.metricLabel}>{beat.derivedMetric.label}</div>
-                        <div className={styles.metricValue}>{beat.derivedMetric.valueString}</div>
-                        <div className={styles.metricDetails}>{beat.derivedMetric.calculationDetails}</div>
-                      </div>
-                    )}
-
-                    <footer className={styles.beatFooter}>
-                      <span className={styles.sourceTag}>
-                        Source: {beat.citation.label} ({beat.citation.date})
-                      </span>
-                      {beat.citation.url && beat.citation.url.startsWith('http') && (
-                        <a
-                          href={beat.citation.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.citationLink}
-                        >
-                          View Primary Document &rarr;
-                        </a>
-                      )}
-                    </footer>
-                  </article>
-                ))}
-              </div>
-            </section>
-          ))}
-
-          {/* Grand Finale Table Summary */}
-          <section className={styles.finaleSection}>
+          {/* Section 1: The Canonical Unit */}
+          <section className={styles.chapterSection}>
             <div className={styles.chapterHeader}>
-              <span className={styles.chapterTag}>Summary Arithmetic</span>
-              <h2 className={styles.chapterTitle}>The Finale Package vs Forbes 400 Remainder</h2>
+              <span className={styles.chapterTag}>Part 1</span>
+              <h2 className={styles.chapterTitle}>The Starting Unit: $1,000</h2>
             </div>
-            <p className={styles.summaryLead}>
-              Combining every public investment examined in Chapter 4 produces a comprehensive social program costing $190 billion.
-              Carving this out of the Forbes 400’s $6.6 trillion wealth leaves $6.41 trillion untouched.
+            <p>
+              On this scale, a single square pixel of area represents exactly <strong>$1,000</strong>.
+              Because a single pixel is difficult to see on a modern high-resolution display, a subtle indicator points to it.
+              Everything else on this website is drawn strictly proportional to this single pixel.
             </p>
+          </section>
 
+          {/* Section 2: Human Scale */}
+          <section className={styles.chapterSection}>
+            <div className={styles.chapterHeader}>
+              <span className={styles.chapterTag}>Part 2</span>
+              <h2 className={styles.chapterTitle}>Human Scale: $83,730</h2>
+            </div>
+            <p>
+              According to the US Census Bureau’s 2024 Current Population Survey (released in September 2025), the median annual gross income for an American household was <strong>$83,730</strong>.
+            </p>
+            <p>
+              At our scale, this represents an area of 83.73 square pixels—a modest square roughly 9.15 pixels on each side.
+              Half of all American households earn more than this in a year of labor; half earn less.
+            </p>
+          </section>
+
+          {/* Section 3: One Million Dollars */}
+          <section className={styles.chapterSection}>
+            <div className={styles.chapterHeader}>
+              <span className={styles.chapterTag}>Part 3</span>
+              <h2 className={styles.chapterTitle}>$1 Million</h2>
+            </div>
+            <p>
+              One million dollars consists of 1,000 units of $1,000.
+              In physical terms, it forms a square 31.62 pixels wide and 31.62 pixels tall (1,000 square pixels).
+            </p>
+            <p>
+              It is already noticeably larger than the median household income, yet easily fits on any computer screen.
+            </p>
+          </section>
+
+          {/* Section 4: One Billion Dollars */}
+          <section className={styles.chapterSection}>
+            <div className={styles.chapterHeader}>
+              <span className={styles.chapterTag}>Part 4</span>
+              <h2 className={styles.chapterTitle}>$1 Billion</h2>
+            </div>
+            <p>
+              One billion dollars is one thousand million dollars.
+              At a corridor height of 500 pixels, one billion dollars stretches <strong>2,000 pixels</strong> long.
+            </p>
+            <p>
+              Embedded right at the entrance of this 2,000-pixel corridor is the entire $1 million square—a tiny 31.62-pixel box sitting inside an enormous 2,000-pixel expanse.
+              Traversing this distance requires scrolling across several screens.
+            </p>
+          </section>
+
+          {/* Section 5: One Trillion Dollars */}
+          <section className={styles.chapterSection}>
+            <div className={styles.chapterHeader}>
+              <span className={styles.chapterTag}>Part 5</span>
+              <h2 className={styles.chapterTitle}>$1 Trillion: The Modern Benchmark</h2>
+            </div>
+            <p>
+              One trillion dollars is one thousand billion dollars.
+              At the same canonical scale and 500-pixel height, one trillion dollars requires a corridor <strong>2,000,000 pixels long</strong> (two million pixels).
+            </p>
+            <p>
+              At the entrance of this corridor, the entire 2,000-pixel billion-dollar rectangle that previously felt enormous now occupies a mere fraction of the opening.
+            </p>
+            <p>
+              Inside this trillion-dollar corridor, physical benchmarks put the scale in perspective:
+            </p>
+            <ul>
+              <li>
+                <strong>40 years of median household income ($3.35 million):</strong> A typical career of gross earnings occupies just 6.7 pixels along the corridor.
+              </li>
+              <li>
+                <strong>1% of $1 trillion ($10 billion):</strong> Reached after 20,000 pixels of scrolling. Losing 99% of one trillion dollars still leaves ten thousand million dollars.
+              </li>
+              <li>
+                <strong>Elon Musk ($892 billion):</strong> According to Forbes’ Real-Time Billionaires snapshot on 1 September 2026, Elon Musk’s estimated net worth is $892 billion. In our trillion-dollar corridor, his fortune reaches 1,784,000 pixels—or 89.2% of the way through the corridor.
+              </li>
+            </ul>
+          </section>
+
+          {/* Section 6: Collective Scale & Finale */}
+          <section className={styles.chapterSection}>
+            <div className={styles.chapterHeader}>
+              <span className={styles.chapterTag}>Part 6</span>
+              <h2 className={styles.chapterTitle}>The Forbes 400 & The Finale</h2>
+            </div>
+            <p>
+              The combined net worth of the 400 richest Americans on the Forbes 400 list totals <strong>$6.6 trillion</strong> ($6,600,000,000,000).
+              At 500 pixels high, this corridor extends for <strong>13,200,000 pixels</strong>.
+            </p>
+            <p>
+              To grasp the sheer magnitude of this fortune, consider a simple division:
+            </p>
             <div className={styles.tableWrapper}>
               <table className={styles.summaryTable}>
                 <thead>
                   <tr>
-                    <th>Component Program</th>
-                    <th>Unit Cost</th>
-                    <th>Beneficiaries / Units</th>
-                    <th>Total Cost</th>
+                    <th>Component</th>
+                    <th>Value</th>
+                    <th>Corridor Length</th>
+                    <th>Proportion</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {finale.items.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.name}</td>
-                      <td>{formatCurrency(item.unitCost)}</td>
-                      <td>{item.quantity.toLocaleString('en-US')}</td>
-                      <td>{formatCurrency(item.totalCost)}</td>
-                    </tr>
-                  ))}
-                  <tr className={styles.totalRow}>
-                    <td colSpan={3}>Combined Social Investment Package</td>
-                    <td>$190,000,000,000 (2.88%)</td>
+                  <tr>
+                    <td><strong>Reserve $1 Billion for Each of the 400 Members</strong></td>
+                    <td>$400,000,000,000</td>
+                    <td>800,000 px</td>
+                    <td>6.06%</td>
                   </tr>
                   <tr className={styles.remainderRow}>
-                    <td colSpan={3}>Forbes 400 Aggregate Remainder</td>
-                    <td>$6,410,000,000,000 (97.12%)</td>
+                    <td><strong>Amount Remaining</strong></td>
+                    <td>$6,200,000,000,000</td>
+                    <td>12,400,000 px</td>
+                    <td>93.94%</td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <p className={styles.footnote}>
-              * Note: Comparisons represent orders of magnitude and physical proportions. Net worth is an equity asset valuation, not a cash balance. Different dated datasets are not inflation-adjusted.
+            <p>
+              Even after leaving every single one of the 400 individuals with a personal fortune of one thousand million dollars ($1,000,000,000), <strong>$6.2 trillion—or 93.9% of their wealth—still remains</strong>.
+              The geometry speaks for itself.
             </p>
           </section>
         </div>
