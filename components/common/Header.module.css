@@ -1,0 +1,120 @@
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background-color: var(--bg-translucent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-subtle);
+  z-index: 100;
+}
+
+.container {
+  max-width: 1400px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.titleLink {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.titleLink:hover {
+  text-decoration: none;
+}
+
+.title {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-primary);
+}
+
+.scaleBadge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  background-color: var(--bg-tertiary);
+  color: var(--accent-amber);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-strong);
+  letter-spacing: 0.05em;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.navLink {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.navLink:hover {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.navLink.active {
+  color: var(--accent-amber);
+}
+
+.githubLink {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+  padding: 4px 10px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.githubLink:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .header {
+    height: 48px;
+  }
+  
+  .container {
+    padding: 0 12px;
+  }
+  
+  .scaleBadge {
+    display: none;
+  }
+  
+  .nav {
+    gap: 12px;
+  }
+  
+  .navLink {
+    font-size: 0.78rem;
+  }
+  
+  .githubLink {
+    display: none;
+  }
+}

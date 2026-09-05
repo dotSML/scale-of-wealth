@@ -1,0 +1,29 @@
+.viewport {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+}
+
+.scrollContainer {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  -webkit-overflow-scrolling: touch;
+  outline: none;
+}
+
+.horizontal {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.vertical {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.runway {
+  pointer-events: none;
+}
