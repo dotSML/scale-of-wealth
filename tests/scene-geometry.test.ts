@@ -58,4 +58,21 @@ describe('Scene Geometry and Segment Layout', () => {
     expect(overview.overviewHeight).toBeLessThanOrEqual(800);
     expect(overview.dollarsPerPixelSq).toBeGreaterThan(1_000);
   });
+
+  it('allocates generous authored editorial spacing to ordinary money layout instead of 8px', () => {
+    const ordinaryLayout = getSceneLayout('ordinary', 'horizontal');
+    expect(ordinaryLayout.totalPixels).toBe(6800);
+    expect(ordinaryLayout.beats.length).toBe(6);
+    // Opening beat 1 ($1,000) at 450px
+    expect(ordinaryLayout.beats[0].editorialPlacementPx).toBe(450);
+    // Career beat 6 at 5,750px
+    expect(ordinaryLayout.beats[5].editorialPlacementPx).toBe(5750);
+  });
+
+  it('stabilizes scene layout instances through caching', () => {
+    const layoutA = getSceneLayout('musk', 'horizontal');
+    const layoutB = getSceneLayout('musk', 'horizontal');
+    expect(layoutA).toBe(layoutB); // identical reference
+  });
 });
+

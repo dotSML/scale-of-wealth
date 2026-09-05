@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { SceneId, SCENES, StoryBeat, getStoryBeats } from '@/data/story';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { SceneId, SCENES, getStoryBeats, SCENE_ORDER } from '@/data/story';
 import {
   getSceneLayout,
   usdToScenePixel,
   scenePixelToUSD,
+  getActiveBeatForScroll,
   LayoutOrientation,
   SceneLayout,
 } from '@/lib/scene-geometry';
@@ -16,62 +17,72 @@ import {
 import { WealthCanvas } from './WealthCanvas';
 import { WealthHUD } from './WealthHUD';
 import { StoryOverlay } from './StoryOverlay';
-import { JumpModal } from './JumpModal';
 import { CitationModal } from './CitationModal';
+import { ProportionalOverview } from './ProportionalOverview';
 import styles from './WealthScroller.module.css';
 
 export function WealthScroller() {
-  const [sceneId, setSceneId] = useState<SceneId>('musk');
+  // Start naturally with ordinary money at the $1,000 pixel
+  const [sceneId, setSceneId] = useState<SceneId>('ordinary');
   const [orientation, setOrientation] = useState<LayoutOrientation>('horizontal');
   const [segmentIndex, setSegmentIndex] = useState(0);
-  const [currentUSD, setCurrentUSD] = useState(0);
+  const [currentUSD, setCurrentUSD] = useState(1_000);
   const [currentPixelOffset, setCurrentPixelOffset] = useState(0);
-  const [activeBeat, setActiveBeat] = useState<StoryBeat | null>(null);
-  const [isOverviewMode, setIsOverviewMode] = useState(false);
   const [isCitationOpen, setIsCitationOpen] = useState(false);
-
-  // Jump state
-  const [jumpInfo, setJumpInfo] = useState<{
-    isOpen: boolean;
-    traversedUSD: number;
-    targetBeatTitle: string;
-  }>({
-    isOpen: false,
-    traversedUSD: 0,
-    targetBeatTitle: '',
-  });
+  const [isOverviewOpen, setIsOverviewOpen] = useState(false);
+  const [speedMultiplier, setSpeedMultiplier] = useState(1.0);
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const isRebasingRef = useRef(false);
-  const lastUSDRef = useRef(0);
+  const lastUSDRef = useRef(1_000);
 
   // All beats
-  const allBeats = useRef(getStoryBeats()).current;
+  const allBeats = useMemo(() => getStoryBeats(), []);
 
-  // Current scene layout
-  const sceneLayout: SceneLayout = getSceneLayout(sceneId, orientation);
+  // Stabilize scene layout reference
+  const sceneLayout: SceneLayout = useMemo(
+    () => getSceneLayout(sceneId, orientation),
+    [sceneId, orientation]
+  );
   const currentSegment = sceneLayout.segments[segmentIndex] || sceneLayout.segments[0];
 
-  // Navigate to a specific USD offset within a scene
-  const navigateToUSD = useCallback((
-    targetUSD: number,
+  // Active Story Beat derived directly and deterministically from explicit visibility ranges
+  const activeBeat = useMemo(
+    () => getActiveBeatForScroll(sceneLayout, currentPixelOffset),
+    [sceneLayout, currentPixelOffset]
+  );
+
+  // Sync active beat ID with URL hash without triggering full reload
+  useEffect(() => {
+    if (activeBeat && typeof window !== 'undefined') {
+      const hash = `#${activeBeat.id}`;
+      if (window.location.hash !== hash) {
+        window.history.replaceState(null, '', hash);
+      }
+    }
+  }, [activeBeat]);
+
+  // Navigate to a specific logical pixel within a scene
+  const navigateToPixel = useCallback((
+    targetPixel: number,
     targetSceneId: SceneId,
     targetOrientation: LayoutOrientation = orientation,
     animate = false
   ) => {
-    const safeUSD = Math.max(0, Math.min(targetUSD, SCENES[targetSceneId].totalUSD));
+    const layout = getSceneLayout(targetSceneId, targetOrientation);
+    const safePixel = Math.max(0, Math.min(targetPixel, layout.totalPixels));
+    const safeUSD = scenePixelToUSD(safePixel, targetSceneId, targetOrientation);
+
     lastUSDRef.current = safeUSD;
     setCurrentUSD(safeUSD);
+    setCurrentPixelOffset(safePixel);
 
     if (targetSceneId !== sceneId) {
       setSceneId(targetSceneId);
     }
 
-    const targetPixel = usdToScenePixel(safeUSD, targetSceneId, targetOrientation);
-    setCurrentPixelOffset(targetPixel);
-
     const { segmentIndex: targetSegIndex, segmentOffset } = logicalToSegmentCoordinate(
-      targetPixel,
+      safePixel,
       SEGMENT_MAX_PIXELS
     );
 
@@ -97,18 +108,18 @@ export function WealthScroller() {
     }
   }, [orientation, sceneId]);
 
-  // Detect orientation on mount and resize
+  // Detect orientation on mount and window resize
   useEffect(() => {
     const handleResize = () => {
       const isMobile = window.innerWidth <= 768;
       const newOrientation: LayoutOrientation = isMobile ? 'vertical' : 'horizontal';
-      
-      setOrientation((prevOrientation) => {
-        if (prevOrientation !== newOrientation) {
-          // Preserve narrative position across orientation change
+
+      setOrientation((prev) => {
+        if (prev !== newOrientation) {
           const savedUSD = lastUSDRef.current;
           setTimeout(() => {
-            navigateToUSD(savedUSD, sceneId, newOrientation);
+            const targetPx = usdToScenePixel(savedUSD, sceneId, newOrientation);
+            navigateToPixel(targetPx, sceneId, newOrientation);
           }, 50);
         }
         return newOrientation;
@@ -118,43 +129,7 @@ export function WealthScroller() {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [navigateToUSD, sceneId]);
-
-  // Update active beat based on current USD
-  useEffect(() => {
-    lastUSDRef.current = currentUSD;
-
-    // Find closest beat in current scene
-    const sceneBeats = sceneLayout.beats;
-    let foundBeat: StoryBeat | null = null;
-    let minDistance = Infinity;
-
-    for (const b of sceneBeats) {
-      const dist = Math.abs(b.offsetInParentUSD - currentUSD);
-      // Tolerance: within 10% or within $1B / $10B depending on fortune size
-      const tolerance = Math.max(sceneLayout.totalUSD * 0.05, 5_000_000_000);
-      if (dist < tolerance && dist < minDistance) {
-        minDistance = dist;
-        foundBeat = b;
-      }
-    }
-
-    // Fallback: if at very start of scene, select first beat
-    if (!foundBeat && sceneBeats.length > 0) {
-      if (currentUSD < sceneBeats[0].offsetInParentUSD) {
-        foundBeat = sceneBeats[0];
-      } else {
-        foundBeat = sceneBeats[sceneBeats.length - 1];
-      }
-    }
-
-    setActiveBeat(foundBeat);
-
-    // Sync URL hash without triggering full history push
-    if (foundBeat && window.location.hash !== `#${foundBeat.id}`) {
-      window.history.replaceState(null, '', `#${foundBeat.id}`);
-    }
-  }, [currentUSD, sceneLayout]);
+  }, [navigateToPixel, sceneId]);
 
   // Handle URL hash on initial load and popstate
   useEffect(() => {
@@ -164,20 +139,19 @@ export function WealthScroller() {
 
       const targetBeat = allBeats.find((b) => b.id === hash);
       if (targetBeat) {
-        navigateToUSD(targetBeat.offsetInParentUSD, targetBeat.parentSceneId, orientation);
+        const targetPx = SCENES[targetBeat.parentSceneId].isCorridor
+          ? usdToScenePixel(targetBeat.offsetInParentUSD, targetBeat.parentSceneId, orientation)
+          : targetBeat.editorialPlacementPx;
+        navigateToPixel(targetPx, targetBeat.parentSceneId, orientation);
       }
     };
 
     handleHashChange();
     window.addEventListener('popstate', handleHashChange);
-    window.addEventListener('hashchange', handleHashChange);
-    return () => {
-      window.removeEventListener('popstate', handleHashChange);
-      window.removeEventListener('hashchange', handleHashChange);
-    };
-  }, [allBeats, navigateToUSD, orientation]);
+    return () => window.removeEventListener('popstate', handleHashChange);
+  }, [allBeats, navigateToPixel, orientation]);
 
-  // Native scroll listener with coordinate rebasing
+  // Native scroll listener with actual extent rebasing and scene chaining
   const handleScroll = useCallback(() => {
     if (isRebasingRef.current) return;
     const container = scrollContainerRef.current;
@@ -185,104 +159,171 @@ export function WealthScroller() {
 
     const isHorizontal = orientation === 'horizontal';
     const scrollPos = isHorizontal ? container.scrollLeft : container.scrollTop;
+    const maxScroll = isHorizontal
+      ? container.scrollWidth - container.clientWidth
+      : container.scrollHeight - container.clientHeight;
 
-    // Current segment bounds
     const segLength = currentSegment.pixelLength;
 
-    // FORWARD REBASING: User crossed the end of this segment
-    if (scrollPos >= segLength - 2 && segmentIndex < sceneLayout.segments.length - 1) {
-      isRebasingRef.current = true;
-      const nextIndex = segmentIndex + 1;
-      setSegmentIndex(nextIndex);
+    // FORWARD REBASING / SCENE TRANSITION
+    if (maxScroll > 0 && scrollPos >= maxScroll - 2) {
+      // 1. Next segment in same scene
+      if (segmentIndex < sceneLayout.segments.length - 1) {
+        isRebasingRef.current = true;
+        const nextIndex = segmentIndex + 1;
+        setSegmentIndex(nextIndex);
 
-      const overflow = scrollPos - segLength;
-      if (isHorizontal) {
-        container.scrollLeft = overflow;
-      } else {
-        container.scrollTop = overflow;
+        const overflow = Math.max(0, scrollPos - maxScroll);
+        if (isHorizontal) {
+          container.scrollLeft = overflow;
+        } else {
+          container.scrollTop = overflow;
+        }
+
+        const newLogicalPx = currentSegment.cumulativeStartPixels + segLength + overflow;
+        setCurrentPixelOffset(newLogicalPx);
+        setCurrentUSD(scenePixelToUSD(newLogicalPx, sceneId, orientation));
+
+        setTimeout(() => {
+          isRebasingRef.current = false;
+        }, 30);
+        return;
       }
-
-      const newLogicalPx = currentSegment.cumulativeStartPixels + segLength + overflow;
-      setCurrentPixelOffset(newLogicalPx);
-      setCurrentUSD(scenePixelToUSD(newLogicalPx, sceneId, orientation));
-
-      setTimeout(() => {
-        isRebasingRef.current = false;
-      }, 30);
-      return;
+      // 2. Transition naturally to next scene in narrative order
+      else {
+        const sceneIdx = SCENE_ORDER.indexOf(sceneId);
+        if (sceneIdx < SCENE_ORDER.length - 1) {
+          const nextSceneId = SCENE_ORDER[sceneIdx + 1];
+          navigateToPixel(0, nextSceneId, orientation, false);
+          return;
+        }
+      }
     }
 
-    // REVERSE REBASING: User scrolled back past the start of this segment
-    if (scrollPos <= 0 && segmentIndex > 0) {
-      isRebasingRef.current = true;
-      const prevIndex = segmentIndex - 1;
-      const prevSeg = sceneLayout.segments[prevIndex];
-      setSegmentIndex(prevIndex);
+    // REVERSE REBASING / SCENE TRANSITION
+    if (scrollPos <= 0) {
+      // 1. Previous segment in same scene
+      if (segmentIndex > 0) {
+        isRebasingRef.current = true;
+        const prevIndex = segmentIndex - 1;
+        const prevSeg = sceneLayout.segments[prevIndex];
+        setSegmentIndex(prevIndex);
 
-      if (isHorizontal) {
-        container.scrollLeft = prevSeg.pixelLength - 1;
-      } else {
-        container.scrollTop = prevSeg.pixelLength - 1;
+        const prevMaxScroll = Math.max(
+          0,
+          prevSeg.pixelLength - (isHorizontal ? container.clientWidth : container.clientHeight)
+        );
+        if (isHorizontal) {
+          container.scrollLeft = prevMaxScroll;
+        } else {
+          container.scrollTop = prevMaxScroll;
+        }
+
+        const newLogicalPx = prevSeg.cumulativeStartPixels + prevMaxScroll;
+        setCurrentPixelOffset(newLogicalPx);
+        setCurrentUSD(scenePixelToUSD(newLogicalPx, sceneId, orientation));
+
+        setTimeout(() => {
+          isRebasingRef.current = false;
+        }, 30);
+        return;
       }
-
-      const newLogicalPx = prevSeg.cumulativeStartPixels + prevSeg.pixelLength - 1;
-      setCurrentPixelOffset(newLogicalPx);
-      setCurrentUSD(scenePixelToUSD(newLogicalPx, sceneId, orientation));
-
-      setTimeout(() => {
-        isRebasingRef.current = false;
-      }, 30);
-      return;
+      // 2. Transition backwards to previous scene in narrative order
+      else {
+        const sceneIdx = SCENE_ORDER.indexOf(sceneId);
+        if (sceneIdx > 0) {
+          const prevSceneId = SCENE_ORDER[sceneIdx - 1];
+          const prevLayout = getSceneLayout(prevSceneId, orientation);
+          navigateToPixel(prevLayout.totalPixels - 10, prevSceneId, orientation, false);
+          return;
+        }
+      }
     }
 
-    // Normal in-segment scrolling
+    // In-segment continuous scrolling
     const logicalPx = currentSegment.cumulativeStartPixels + scrollPos;
     setCurrentPixelOffset(logicalPx);
     const derivedUSD = scenePixelToUSD(logicalPx, sceneId, orientation);
     setCurrentUSD(derivedUSD);
-  }, [currentSegment, orientation, sceneId, sceneLayout.segments, segmentIndex]);
+    lastUSDRef.current = derivedUSD;
+  }, [currentSegment, orientation, sceneId, sceneLayout, segmentIndex, navigateToPixel]);
 
-  // Desktop horizontal wheel translation (preserving browser zoom on ctrlKey)
+  // Calm desktop wheel translation + smooth bounded acceleration in long fortunes
   const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
-    // Preserve browser pinch-to-zoom (ctrlKey)
-    if (e.ctrlKey || e.metaKey) {
-      return;
-    }
+    // Preserve browser pinch-to-zoom
+    if (e.ctrlKey || e.metaKey) return;
 
     if (orientation === 'horizontal') {
       const container = scrollContainerRef.current;
       if (!container) return;
 
-      // Translate vertical delta into horizontal scroll
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        container.scrollLeft += e.deltaY;
-      }
-    }
-  }, [orientation]);
+      const rawDelta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
 
-  // Keyboard navigation
+      // In authored scenes (ordinary & ladder): strict 1:1 input-to-camera movement
+      if (!SCENES[sceneId].isCorridor) {
+        setSpeedMultiplier(1.0);
+        container.scrollLeft += rawDelta;
+        return;
+      }
+
+      // In long corridor fortunes: calculate distance to upcoming landmark
+      const beats = sceneLayout.beats;
+      let nextBeatPx = Infinity;
+      for (const b of beats) {
+        const bPx = usdToScenePixel(b.offsetInParentUSD, sceneId, 'horizontal');
+        if (bPx > currentPixelOffset + 50) {
+          nextBeatPx = bPx;
+          break;
+        }
+      }
+
+      const distToNext = nextBeatPx - currentPixelOffset;
+
+      // Traversal speed smoothly scales up only when far (> 4000px) from the next landmark.
+      // Returns to 1.0x normal speed well before (< 1500px) the next comparison enters view!
+      let mult = 1.0;
+      if (distToNext > 4000 && Math.abs(rawDelta) > 10) {
+        mult = Math.min(3.2, 1.0 + (distToNext / 25000) * 1.5);
+      } else {
+        mult = 1.0;
+      }
+
+      setSpeedMultiplier(mult);
+      container.scrollLeft += rawDelta * mult;
+    }
+  }, [currentPixelOffset, orientation, sceneId, sceneLayout.beats]);
+
+  // Keyboard navigation avoiding global interception
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Avoid intercepting if focus is in modal or input
-      if (isCitationOpen) return;
+      // Do not intercept if focus is in an input, button, or modal
+      const activeEl = document.activeElement;
+      const isInteractive =
+        activeEl instanceof HTMLInputElement ||
+        activeEl instanceof HTMLTextAreaElement ||
+        activeEl instanceof HTMLSelectElement ||
+        activeEl instanceof HTMLButtonElement ||
+        (activeEl as HTMLElement)?.isContentEditable;
+
+      if (isInteractive || isCitationOpen || isOverviewOpen) return;
 
       const container = scrollContainerRef.current;
       if (!container) return;
 
-      const scrollDelta = 100;
-      const pageDelta = 600;
+      const delta = 120;
+      const pageDelta = 650;
 
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'j') {
         if (orientation === 'horizontal') {
-          container.scrollLeft += scrollDelta;
+          container.scrollLeft += delta;
         } else {
-          container.scrollTop += scrollDelta;
+          container.scrollTop += delta;
         }
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'k') {
         if (orientation === 'horizontal') {
-          container.scrollLeft -= scrollDelta;
+          container.scrollLeft -= delta;
         } else {
-          container.scrollTop -= scrollDelta;
+          container.scrollTop -= delta;
         }
       } else if (e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey)) {
         e.preventDefault();
@@ -299,81 +340,54 @@ export function WealthScroller() {
           container.scrollTop -= pageDelta;
         }
       } else if (e.key === 'Home') {
-        navigateToUSD(0, sceneId, orientation, true);
+        navigateToPixel(0, 'ordinary', orientation, true);
       } else if (e.key === 'End') {
-        navigateToUSD(sceneLayout.totalUSD, sceneId, orientation, true);
+        const lastScene = SCENE_ORDER[SCENE_ORDER.length - 1];
+        const lastLayout = getSceneLayout(lastScene, orientation);
+        navigateToPixel(lastLayout.totalPixels, lastScene, orientation, true);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCitationOpen, navigateToUSD, orientation, sceneId, sceneLayout.totalUSD]);
+  }, [isCitationOpen, isOverviewOpen, navigateToPixel, orientation]);
 
-  // Chapter / Scene Selector handler
+  // Find next landmark for the discreet "Skip ahead" link during empty stretches
+  const nextLandmark = useMemo(() => {
+    const beats = sceneLayout.beats;
+    for (const b of beats) {
+      const bPx = SCENES[sceneId].isCorridor
+        ? usdToScenePixel(b.offsetInParentUSD, sceneId, orientation)
+        : b.editorialPlacementPx;
+      if (bPx > currentPixelOffset + 100) {
+        return { beat: b, pixel: bPx, distance: bPx - currentPixelOffset };
+      }
+    }
+    return null;
+  }, [currentPixelOffset, orientation, sceneId, sceneLayout.beats]);
+
+  // Only show skip ahead when there's an enormous empty stretch ahead (> 5,000 px)
+  const canSkipAhead = Boolean(nextLandmark && nextLandmark.distance > 5000);
+  const handleSkipAhead = useCallback(() => {
+    if (nextLandmark) {
+      navigateToPixel(nextLandmark.pixel, sceneId, orientation, true);
+    }
+  }, [navigateToPixel, nextLandmark, sceneId, orientation]);
+
+  // Jump directly to a scene from navigation menu
   const handleSelectScene = (newSceneId: SceneId) => {
-    navigateToUSD(0, newSceneId, orientation, false);
-  };
-
-  // Previous & Next Beat buttons
-  const currentBeatIndex = activeBeat ? activeBeat.index : 1;
-  const canPrev = currentBeatIndex > 1;
-  const canNext = currentBeatIndex < 30;
-
-  const handlePrevBeat = () => {
-    if (!canPrev) return;
-    const prevBeat = allBeats[currentBeatIndex - 2];
-    if (prevBeat) {
-      navigateToUSD(prevBeat.offsetInParentUSD, prevBeat.parentSceneId, orientation, true);
-    }
-  };
-
-  const handleNextBeat = () => {
-    if (!canNext) return;
-    const nextBeat = allBeats[currentBeatIndex];
-    if (nextBeat) {
-      navigateToUSD(nextBeat.offsetInParentUSD, nextBeat.parentSceneId, orientation, true);
-    }
-  };
-
-  // Jump forward across uninterrupted wealth
-  const handleJumpNext = () => {
-    let targetBeat: StoryBeat | null = null;
-
-    // Find the next beat in narrative order
-    if (currentBeatIndex < 30) {
-      targetBeat = allBeats[currentBeatIndex];
-    } else {
-      // Jump to the end of current fortune
-      const traversed = sceneLayout.totalUSD - currentUSD;
-      navigateToUSD(sceneLayout.totalUSD, sceneId, orientation, true);
-      setJumpInfo({
-        isOpen: true,
-        traversedUSD: Math.max(0, traversed),
-        targetBeatTitle: 'End of ' + SCENES[sceneId].title,
-      });
-      return;
-    }
-
-    if (targetBeat) {
-      const traversed = Math.abs(targetBeat.offsetInParentUSD - currentUSD);
-      navigateToUSD(targetBeat.offsetInParentUSD, targetBeat.parentSceneId, orientation, true);
-      setJumpInfo({
-        isOpen: true,
-        traversedUSD: traversed,
-        targetBeatTitle: targetBeat.title,
-      });
-    }
+    navigateToPixel(0, newSceneId, orientation, false);
   };
 
   return (
     <div className={styles.viewport}>
-      {/* Background Wealth Canvas */}
+      {/* Background Wealth Canvas with filled shapes */}
       <WealthCanvas
         sceneId={sceneId}
         sceneLayout={sceneLayout}
         currentPixelOffset={currentPixelOffset}
         orientation={orientation}
-        isOverviewMode={isOverviewMode}
+        isOverviewMode={false}
         activeBeat={activeBeat}
       />
 
@@ -388,7 +402,7 @@ export function WealthScroller() {
         tabIndex={0}
         aria-label="Wealth Scale Scroller"
       >
-        {/* Virtual Runway Sized Exactly to Current Segment */}
+        {/* Virtual Runway Sized to Current Segment */}
         <div
           className={styles.runway}
           style={
@@ -399,34 +413,27 @@ export function WealthScroller() {
         />
       </div>
 
-      {/* Active Story Beat Callout Overlay */}
+      {/* Short, elegant visual annotation positioned beside visual */}
       <StoryOverlay
         activeBeat={activeBeat}
         onOpenCitation={() => setIsCitationOpen(true)}
       />
 
-      {/* Persistent Scale HUD and Navigation Controls */}
+      {/* Minimal Unobtrusive Chrome (Scale Legend, Navigation Menu, Progress Bar) */}
       <WealthHUD
         currentSceneId={sceneId}
         currentUSD={currentUSD}
-        activeBeat={activeBeat}
         onSelectScene={handleSelectScene}
-        onPrevBeat={handlePrevBeat}
-        onNextBeat={handleNextBeat}
-        onJumpNext={handleJumpNext}
-        canPrev={canPrev}
-        canNext={canNext}
-        isOverviewMode={isOverviewMode}
-        onToggleOverview={() => setIsOverviewMode((prev) => !prev)}
-        onOpenCitation={() => setIsCitationOpen(true)}
+        onOpenProportionalOverview={() => setIsOverviewOpen(true)}
+        onSkipAhead={canSkipAhead ? handleSkipAhead : undefined}
+        nextBeatTitle={nextLandmark?.beat.title}
+        speedMultiplier={speedMultiplier}
       />
 
-      {/* Jump Traversal Toast Notification */}
-      <JumpModal
-        isOpen={jumpInfo.isOpen}
-        traversedUSD={jumpInfo.traversedUSD}
-        targetBeatTitle={jumpInfo.targetBeatTitle}
-        onClose={() => setJumpInfo((prev) => ({ ...prev, isOpen: false }))}
+      {/* Proportional Overview Modal */}
+      <ProportionalOverview
+        isOpen={isOverviewOpen}
+        onClose={() => setIsOverviewOpen(false)}
       />
 
       {/* Expandable Citation Modal */}

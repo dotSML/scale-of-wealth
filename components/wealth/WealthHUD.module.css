@@ -1,262 +1,323 @@
-.hudContainer {
-  position: fixed;
-  inset: 0;
+.hudRoot {
   pointer-events: none;
-  z-index: 50;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 72px 24px 24px;
 }
 
-.topHud {
+/* 1. TOP-LEFT: Scale Legend */
+.scaleLegend {
+  position: absolute;
+  top: 18px;
+  left: 24px;
+  z-index: 50;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+  align-items: center;
+  gap: 14px;
+  background: rgba(14, 14, 18, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 6px 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   pointer-events: auto;
 }
 
-.scaleCard, .householdCard {
-  background-color: var(--bg-translucent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  padding: 10px 14px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-}
-
-.scaleTitle {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  margin-bottom: 2px;
+.scaleTag {
+  display: flex;
+  align-items: center;
 }
 
 .scaleRatio {
   font-family: var(--font-mono);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.78rem;
+  font-weight: 700;
   color: var(--accent-amber);
+  letter-spacing: 0.04em;
 }
 
-.householdCard {
+.referenceItem {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.markerWrapper {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--bg-primary);
-  border: 1px dashed var(--border-strong);
-  border-radius: 4px;
+  gap: 8px;
+  padding-left: 12px;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .markerSquare {
-  background-color: var(--accent-amber);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 0 6px var(--accent-amber-glow);
+  background-color: #60a5fa;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
 }
 
-.markerMeta {
-  display: flex;
-  flex-direction: column;
+.markerText {
+  font-size: 0.76rem;
+  color: #a1a1aa;
 }
 
-.markerLabel {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-}
-
-.markerValue {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-/* Bottom HUD */
-.bottomHud {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* 2. TOP-RIGHT: Navigation Menu */
+.navMenuContainer {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  z-index: 50;
   pointer-events: auto;
-  max-width: 900px;
-  margin: 0 auto;
+}
+
+.menuTriggerBtn {
+  background: rgba(14, 14, 18, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 7px 16px;
+  color: #f4f1ea;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: all 0.15s ease;
+}
+
+.menuTriggerBtn:hover {
+  background: rgba(26, 26, 32, 0.95);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.currentSceneLabel {
+  color: #f4f1ea;
+}
+
+.dropdownChevron {
+  font-size: 0.75rem;
+  color: #a1a1aa;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 280px;
+  background: #141419;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 8px 0;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  animation: dropDown 0.15s ease-out;
+}
+
+.menuGroupHeader {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #71717a;
+  padding: 6px 14px 4px 14px;
+}
+
+.menuItem {
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  padding: 8px 14px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.12s ease;
+}
+
+.menuItem:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.menuItemActive {
+  background-color: rgba(245, 158, 11, 0.12);
+  border-left: 2px solid #f59e0b;
+}
+
+.menuItemTitle {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #e4e4e7;
+}
+
+.menuItemMeta {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: #a1a1aa;
+}
+
+.menuDivider {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.08);
+  margin: 6px 0;
+}
+
+.menuItemSpecial {
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #f59e0b;
+  transition: background-color 0.12s ease;
+}
+
+.menuItemSpecial:hover {
+  background-color: rgba(245, 158, 11, 0.12);
+}
+
+.menuLink {
+  display: block;
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  color: #a1a1aa;
+  text-decoration: none;
+  transition: color 0.12s ease, background-color 0.12s ease;
+}
+
+.menuLink:hover {
+  color: #f4f1ea;
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* 3. BOTTOM-CENTER: Fortune Progress Bar */
+.fortuneProgressContainer {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  background: rgba(14, 14, 18, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 16px;
+  width: min(90vw, 420px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+}
+
+.fortuneInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+}
+
+.fortuneTitle {
+  font-weight: 600;
+  color: #d4d4d8;
+}
+
+.fortuneNumbers {
+  font-family: var(--font-mono);
+  color: #a1a1aa;
+}
+
+.speedPill {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+}
+
+.progressTrack {
+  height: 4px;
+  background-color: #27272a;
+  border-radius: 2px;
+  overflow: hidden;
   width: 100%;
 }
 
-.fortuneProgressCard {
-  background-color: var(--bg-translucent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  padding: 10px 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-}
-
-.fortuneMeta {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 6px;
-}
-
-.fortuneName {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.fortunePosition {
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--accent-amber);
-}
-
-.progressBarTrack {
-  height: 6px;
-  background-color: var(--bg-tertiary);
-  border-radius: 3px;
-  overflow: hidden;
-  position: relative;
-}
-
-.progressBarFill {
+.progressFill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent-amber), #fbbf24);
-  border-radius: 3px;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  border-radius: 2px;
   transition: width 0.1s linear;
 }
 
-.sceneTabs {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding-bottom: 4px;
+/* 4. SKIP AHEAD LINK */
+.skipAheadContainer {
+  position: absolute;
+  bottom: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  pointer-events: auto;
+  animation: fadeIn 0.2s ease-out;
 }
 
-.sceneTab {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
-  padding: 6px 12px;
-  border-radius: 6px;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-}
-
-.sceneTab:hover {
-  color: var(--text-primary);
-  border-color: var(--border-strong);
-}
-
-.activeSceneTab {
-  background-color: var(--bg-tertiary);
-  color: var(--accent-amber);
-  border-color: var(--accent-amber);
-  font-weight: 600;
-}
-
-.actionControls {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  align-items: center;
-}
-
-.ctrlButton {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
-  padding: 8px 16px;
-  border-radius: 6px;
-  transition: all 0.15s ease;
-}
-
-.ctrlButton:hover:not(:disabled) {
-  background-color: var(--bg-tertiary);
-  border-color: var(--border-strong);
-}
-
-.ctrlButton:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.jumpButton {
-  color: var(--accent-amber);
-  border-color: var(--border-strong);
-  background-color: rgba(245, 158, 11, 0.08);
-}
-
-.jumpButton:hover:not(:disabled) {
-  background-color: rgba(245, 158, 11, 0.18);
-}
-
-.activeMode {
-  background-color: var(--accent-amber);
-  color: #000;
-  border-color: var(--accent-amber);
-}
-
-.activeMode:hover {
-  background-color: #fbbf24;
-}
-
-.citationButton {
+.skipAheadBtn {
+  background: rgba(24, 24, 30, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 6px 14px;
   font-size: 0.78rem;
-  color: var(--text-muted);
-  border: 1px solid var(--border-subtle);
-  padding: 8px 14px;
-  border-radius: 6px;
+  font-weight: 500;
+  color: #e4e4e7;
+  cursor: pointer;
   transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.citationButton:hover {
-  color: var(--text-primary);
-  border-color: var(--border-strong);
+.skipAheadBtn:hover {
+  background: rgba(39, 39, 46, 0.95);
+  border-color: #f59e0b;
+  color: #f59e0b;
 }
 
-@media (max-width: 768px) {
-  .hudContainer {
-    padding: 56px 12px 16px;
+@keyframes dropDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-  .topHud {
-    flex-direction: column;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 640px) {
+  .scaleLegend {
+    top: 12px;
+    left: 12px;
+    padding: 4px 10px;
     gap: 8px;
-    align-items: stretch;
   }
 
-  .bottomHud {
-    gap: 8px;
+  .navMenuContainer {
+    top: 12px;
+    right: 12px;
   }
 
-  .actionControls {
-    flex-wrap: wrap;
-    justify-content: stretch;
+  .fortuneProgressContainer {
+    bottom: 12px;
+    width: calc(100vw - 24px);
   }
 
-  .ctrlButton, .citationButton {
-    flex: 1;
-    text-align: center;
-    padding: 6px 10px;
-    font-size: 0.78rem;
+  .skipAheadContainer {
+    bottom: 56px;
   }
 }

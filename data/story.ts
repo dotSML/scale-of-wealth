@@ -66,7 +66,17 @@ export interface StoryBeat {
   };
 
   citation: BeatCitation;
+  editorialPlacementPx: number;
+  visibleRangePx: [number, number];
+  shortCaption: string;
+  shapeType: 'pixel' | 'square' | 'corridor' | 'slice';
+  shapeWidth: number;
+  shapeHeight: number;
+  shapeColor: string;
+  referenceBeatIds?: string[];
 }
+
+export const SCENE_ORDER: SceneId[] = ['ordinary', 'ladder', 'musk', 'forbes400', 'global', 'finale'];
 
 export interface SceneDefinition {
   id: SceneId;
@@ -74,6 +84,7 @@ export interface SceneDefinition {
   shortName: string;
   totalUSD: number;
   isCorridor: boolean; // true for long rectangles, false for small square sequences
+  editorialLengthPx: number;
   description: string;
 }
 
@@ -84,6 +95,7 @@ export const SCENES: Record<SceneId, SceneDefinition> = {
     shortName: 'Household Scale',
     totalUSD: SNAPSHOT_DATA.usMedianHouseholdIncome.value * 40, // $3.35M
     isCorridor: false,
+    editorialLengthPx: 6800,
     description: 'Human-scale finances: from a single thousand-dollar pixel to a forty-year career.',
   },
   ladder: {
@@ -91,7 +103,8 @@ export const SCENES: Record<SceneId, SceneDefinition> = {
     title: 'The Ladder',
     shortName: 'The Millionaire Gulf',
     totalUSD: SNAPSHOT_DATA.bezosNetWorth.value, // $268B
-    isCorridor: true,
+    isCorridor: false,
+    editorialLengthPx: 13500,
     description: 'Stepping from one million to one billion, and into the modern centi-billionaire class.',
   },
   musk: {
@@ -100,6 +113,7 @@ export const SCENES: Record<SceneId, SceneDefinition> = {
     shortName: 'Musk ($892B)',
     totalUSD: SNAPSHOT_DATA.muskNetWorth.value, // $892B
     isCorridor: true,
+    editorialLengthPx: 2230000,
     description: 'Walking the world’s largest individual fortune, with human lifetimes and public programs embedded within.',
   },
   forbes400: {
@@ -108,6 +122,7 @@ export const SCENES: Record<SceneId, SceneDefinition> = {
     shortName: 'Forbes 400 ($6.6T)',
     totalUSD: SNAPSHOT_DATA.forbes400Wealth.value, // $6.6T
     isCorridor: true,
+    editorialLengthPx: 16500000,
     description: 'The collective wealth of the four hundred richest Americans.',
   },
   global: {
@@ -116,6 +131,7 @@ export const SCENES: Record<SceneId, SceneDefinition> = {
     shortName: 'Global Billionaires ($20.1T)',
     totalUSD: SNAPSHOT_DATA.worldwideBillionaireWealth.value, // $20.1T
     isCorridor: true,
+    editorialLengthPx: 50250000,
     description: 'The aggregate wealth of all 3,428 billionaires on Earth.',
   },
   finale: {
@@ -124,6 +140,7 @@ export const SCENES: Record<SceneId, SceneDefinition> = {
     shortName: 'The Finale Package',
     totalUSD: SNAPSHOT_DATA.forbes400Wealth.value, // $6.6T
     isCorridor: true,
+    editorialLengthPx: 16500000,
     description: 'Carving a transformative $190 billion social investment out of the Forbes 400.',
   },
 };
@@ -131,6 +148,296 @@ export const SCENES: Record<SceneId, SceneDefinition> = {
 /**
  * Builds the complete list of 30 Story Beats with exact derived math and citations.
  */
+
+export interface BeatVisualLayout {
+  editorialPlacementPx: number;
+  visibleRangePx: [number, number];
+  shortCaption: string;
+  shapeType: 'pixel' | 'square' | 'corridor' | 'slice';
+  shapeWidth: number;
+  shapeHeight: number;
+  shapeColor: string;
+  referenceBeatIds?: string[];
+}
+
+export const BEAT_LAYOUT_CONFIG: Record<string, BeatVisualLayout> = {
+  'beat-01': {
+    editorialPlacementPx: 450,
+    visibleRangePx: [0, 900],
+    shortCaption: 'One single square pixel ($1,000). Every comparison that follows preserves this exact physical scale contract.',
+    shapeType: 'pixel',
+    shapeWidth: 1,
+    shapeHeight: 1,
+    shapeColor: '#f59e0b',
+  },
+  'beat-02': {
+    editorialPlacementPx: 1350,
+    visibleRangePx: [900, 1800],
+    shortCaption: 'Average annual cost of employer-sponsored family health insurance in the US ($26,993). Area: 27 px².',
+    shapeType: 'square',
+    shapeWidth: 5.2,
+    shapeHeight: 5.2,
+    shapeColor: '#38bdf8',
+  },
+  'beat-03': {
+    editorialPlacementPx: 2250,
+    visibleRangePx: [1800, 2700],
+    shortCaption: 'Gross annual income of the median American household across all earners before taxes ($83,730).',
+    shapeType: 'square',
+    shapeWidth: 9.15,
+    shapeHeight: 9.15,
+    shapeColor: '#34d399',
+  },
+  'beat-04': {
+    editorialPlacementPx: 3250,
+    visibleRangePx: [2700, 3850],
+    shortCaption: 'Total net worth of the median American family ($192,900)—everything owned minus all debt. Keep this in view.',
+    shapeType: 'square',
+    shapeWidth: 13.89,
+    shapeHeight: 13.89,
+    shapeColor: '#60a5fa',
+  },
+  'beat-05': {
+    editorialPlacementPx: 4450,
+    visibleRangePx: [3850, 5100],
+    shortCaption: 'Purchase price of a modest family home ($300,000), typically requiring thirty years of monthly mortgage payments.',
+    shapeType: 'square',
+    shapeWidth: 17.32,
+    shapeHeight: 17.32,
+    shapeColor: '#fbbf24',
+  },
+  'beat-06': {
+    editorialPlacementPx: 5750,
+    visibleRangePx: [5100, 6800],
+    shortCaption: 'Forty years of continuous labor earning the median household income ($3.35M cumulative gross earnings).',
+    shapeType: 'square',
+    shapeWidth: 57.87,
+    shapeHeight: 57.87,
+    shapeColor: '#818cf8',
+    referenceBeatIds: ['beat-04'],
+  },
+  'beat-07': {
+    editorialPlacementPx: 700,
+    visibleRangePx: [0, 1500],
+    shortCaption: 'One million dollars: 1,000 square pixels (31.6 × 31.6 px). A milestone providing lifelong security. Beside it sits median net worth ($193k).',
+    shapeType: 'square',
+    shapeWidth: 31.62,
+    shapeHeight: 31.62,
+    shapeColor: '#10b981',
+    referenceBeatIds: ['beat-04'],
+  },
+  'beat-08': {
+    editorialPlacementPx: 2200,
+    visibleRangePx: [1500, 3100],
+    shortCaption: 'Ten million dollars: 10,000 square pixels (100 × 100 px). Generational wealth, private investments, and high-tier estates.',
+    shapeType: 'square',
+    shapeWidth: 100,
+    shapeHeight: 100,
+    shapeColor: '#06b6d4',
+    referenceBeatIds: ['beat-07'],
+  },
+  'beat-09': {
+    editorialPlacementPx: 4100,
+    visibleRangePx: [3100, 5500],
+    shortCaption: 'One hundred million dollars: 100,000 square pixels. Private aircraft and family foundations. Still one-tenth of a billionaire.',
+    shapeType: 'square',
+    shapeWidth: 316.23,
+    shapeHeight: 316.23,
+    shapeColor: '#a855f7',
+    referenceBeatIds: ['beat-07'],
+  },
+  'beat-10': {
+    editorialPlacementPx: 6200,
+    visibleRangePx: [5500, 9500],
+    shortCaption: 'One billion is one thousand millionaires. At our scale, it stretches 2,500 pixels. Notice the tiny $1M square sitting right at the entrance.',
+    shapeType: 'corridor',
+    shapeWidth: 2500,
+    shapeHeight: 400,
+    shapeColor: '#f59e0b',
+    referenceBeatIds: ['beat-07', 'beat-04'],
+  },
+  'beat-11': {
+    editorialPlacementPx: 10500,
+    visibleRangePx: [9500, 13500],
+    shortCaption: 'Jeff Bezos’s estimated fortune ($268B) stretches 670,000 pixels long—the length of two football fields if printed on paper.',
+    shapeType: 'corridor',
+    shapeWidth: 670000,
+    shapeHeight: 400,
+    shapeColor: '#f59e0b',
+  },
+  'beat-12': {
+    editorialPlacementPx: 0,
+    visibleRangePx: [0, 2000],
+    shortCaption: 'Elon Musk: $892 Billion. Richest individual recorded in history. This single rectangle stretches 2,230,000 pixels. Scroll to explore what fits inside.',
+    shapeType: 'corridor',
+    shapeWidth: 2230000,
+    shapeHeight: 400,
+    shapeColor: '#f59e0b',
+  },
+  'beat-13': {
+    editorialPlacementPx: 25,
+    visibleRangePx: [2000, 8000],
+    shortCaption: 'Paid $1,000,000 every single year with zero taxes or expenses, you would need 892,000 years to reach this fortune—three human species lifespans.',
+    shapeType: 'slice',
+    shapeWidth: 25,
+    shapeHeight: 400,
+    shapeColor: '#38bdf8',
+  },
+  'beat-14': {
+    editorialPlacementPx: 18262.5,
+    visibleRangePx: [15000, 21000],
+    shortCaption: 'Saving $10,000 every day since 26 AD totals $7.3 billion. Looking at the corridor ahead, that is less than 1% of Musk’s wealth.',
+    shapeType: 'slice',
+    shapeWidth: 18262.5,
+    shapeHeight: 400,
+    shapeColor: '#10b981',
+  },
+  'beat-16': {
+    editorialPlacementPx: 22300,
+    visibleRangePx: [21000, 23000],
+    shortCaption: 'Just one single percent of Musk’s fortune is $8.92 billion—larger than the annual operating budgets of major world cities.',
+    shapeType: 'slice',
+    shapeWidth: 22300,
+    shapeHeight: 400,
+    shapeColor: '#eab308',
+  },
+  'beat-20': {
+    editorialPlacementPx: 23250,
+    visibleRangePx: [23000, 28000],
+    shortCaption: 'WHO annual resource target to deploy bed nets, diagnostics, and treatments globally to eliminate malaria ($9.3B)—about 1% of Musk.',
+    shapeType: 'slice',
+    shapeWidth: 23250,
+    shapeHeight: 400,
+    shapeColor: '#ec4899',
+  },
+  'beat-19': {
+    editorialPlacementPx: 32500,
+    visibleRangePx: [28000, 50000],
+    shortCaption: 'UN World Food Programme total 2026 requirement to deliver emergency nutrition to 110 million starving people: $13 billion (1.46% of Musk).',
+    shapeType: 'slice',
+    shapeWidth: 32500,
+    shapeHeight: 400,
+    shapeColor: '#ef4444',
+  },
+  'beat-21': {
+    editorialPlacementPx: 75000,
+    visibleRangePx: [65000, 100000],
+    shortCaption: '$30 billion could build or purchase 100,000 permanent homes ($300k each). Notice how narrow this slice looks against the remainder.',
+    shapeType: 'slice',
+    shapeWidth: 75000,
+    shapeHeight: 400,
+    shapeColor: '#f59e0b',
+  },
+  'beat-23': {
+    editorialPlacementPx: 125000,
+    visibleRangePx: [110000, 160000],
+    shortCaption: 'One million full-tuition higher education scholarships of $50,000 each: $50 billion (5.6% of Musk).',
+    shapeType: 'slice',
+    shapeWidth: 125000,
+    shapeHeight: 400,
+    shapeColor: '#a855f7',
+  },
+  'beat-22': {
+    editorialPlacementPx: 250000,
+    visibleRangePx: [230000, 290000],
+    shortCaption: '$100 billion would fully fund 100,000 teachers ($100k/yr total employment cost) for an entire decade, educating millions of children.',
+    shapeType: 'slice',
+    shapeWidth: 250000,
+    shapeHeight: 400,
+    shapeColor: '#38bdf8',
+  },
+  'beat-18': {
+    editorialPlacementPx: 350000,
+    visibleRangePx: [330000, 380000],
+    shortCaption: 'A headline-grabbing $100 million gift from Musk equals $22.42 for a family worth $200,000—the financial equivalent of buying a pizza.',
+    shapeType: 'slice',
+    shapeWidth: 250,
+    shapeHeight: 400,
+    shapeColor: '#06b6d4',
+  },
+  'beat-17': {
+    editorialPlacementPx: 1500000,
+    visibleRangePx: [1480000, 1530000],
+    shortCaption: 'If Musk lost 99% of his entire fortune, he would still possess $8.92 billion—remaining among Earth’s richest people.',
+    shapeType: 'slice',
+    shapeWidth: 22300,
+    shapeHeight: 400,
+    shapeColor: '#ef4444',
+  },
+  'beat-15': {
+    editorialPlacementPx: 2210000,
+    visibleRangePx: [2180000, 2230000],
+    shortCaption: 'Spending $1,000,000 cash under a mattress every single day with zero returns would take 2,442 years to exhaust Musk’s fortune.',
+    shapeType: 'corridor',
+    shapeWidth: 20000,
+    shapeHeight: 400,
+    shapeColor: '#f59e0b',
+  },
+  'beat-25': {
+    editorialPlacementPx: 0,
+    visibleRangePx: [0, 50000],
+    shortCaption: 'The 400 richest Americans collectively hold $6.6 trillion—more wealth than the bottom 60% of the United States combined.',
+    shapeType: 'corridor',
+    shapeWidth: 16500000,
+    shapeHeight: 400,
+    shapeColor: '#f59e0b',
+  },
+  'beat-27': {
+    editorialPlacementPx: 165000,
+    visibleRangePx: [140000, 200000],
+    shortCaption: 'One percent of the Forbes 400 is $66 billion—exceeding the annual defense or education budgets of many industrialized nations.',
+    shapeType: 'slice',
+    shapeWidth: 165000,
+    shapeHeight: 400,
+    shapeColor: '#eab308',
+  },
+  'beat-29': {
+    editorialPlacementPx: 1000000,
+    visibleRangePx: [900000, 1200000],
+    shortCaption: 'Reserving $1,000,000,000 for each of the 400 members ($400B reserved) leaves $6.2 trillion (93.9%) remaining untouched.',
+    shapeType: 'slice',
+    shapeWidth: 1000000,
+    shapeHeight: 400,
+    shapeColor: '#10b981',
+  },
+  'beat-26': {
+    editorialPlacementPx: 0,
+    visibleRangePx: [0, 50000],
+    shortCaption: '$20.1 trillion across all 3,428 billionaires on Earth. More economic value than the annual GDP of every nation except the US.',
+    shapeType: 'corridor',
+    shapeWidth: 50250000,
+    shapeHeight: 400,
+    shapeColor: '#f59e0b',
+  },
+  'beat-28': {
+    editorialPlacementPx: 502500,
+    visibleRangePx: [450000, 580000],
+    shortCaption: 'A 1% contribution from global billionaires yields $201 billion—enough to end hunger, malaria, and build worldwide climate resilience.',
+    shapeType: 'slice',
+    shapeWidth: 502500,
+    shapeHeight: 400,
+    shapeColor: '#eab308',
+  },
+  'beat-24': {
+    editorialPlacementPx: 25000,
+    visibleRangePx: [20000, 35000],
+    shortCaption: 'Direct $10,000 emergency cash grants to 1,000,000 families facing eviction or medical crisis: $10 billion.',
+    shapeType: 'slice',
+    shapeWidth: 25000,
+    shapeHeight: 400,
+    shapeColor: '#10b981',
+  },
+  'beat-30': {
+    editorialPlacementPx: 0,
+    visibleRangePx: [0, 500000],
+    shortCaption: 'Combining 100k homes ($30B), 100k teachers ($100B), 1M scholarships ($50B), and 1M grants ($10B) equals $190B (2.9% of Forbes 400). $6.41T remains.',
+    shapeType: 'corridor',
+    shapeWidth: 16500000,
+    shapeHeight: 400,
+    shapeColor: '#f59e0b',
+  },
+};
+
 export function getStoryBeats(): StoryBeat[] {
   const muskVal = SNAPSHOT_DATA.muskNetWorth.value; // $892B
   const bezosVal = SNAPSHOT_DATA.bezosNetWorth.value; // $268B
@@ -153,8 +460,8 @@ export function getStoryBeats(): StoryBeat[] {
   const global1Pct = globalVal * 0.01; // $201B
   const forbesReserve = forbes400RemainingAfterOneBillionReserve();
   const finale = calculateFinalePackage();
-
-  return [
+  type RawBeat = Omit<StoryBeat, keyof BeatVisualLayout>;
+  const rawBeats: RawBeat[] = [
     // CHAPTER 1: ORDINARY MONEY (Beats 1-6)
     {
       id: 'beat-01',
@@ -978,4 +1285,21 @@ export function getStoryBeats(): StoryBeat[] {
       },
     },
   ];
+
+  return rawBeats.map((b) => {
+    const config = BEAT_LAYOUT_CONFIG[b.id];
+    if (config) {
+      return { ...b, ...config };
+    }
+    return {
+      ...b,
+      editorialPlacementPx: 0,
+      visibleRangePx: [0, 1000] as [number, number],
+      shortCaption: b.headline,
+      shapeType: 'square' as const,
+      shapeWidth: 10,
+      shapeHeight: 10,
+      shapeColor: '#f59e0b',
+    };
+  });
 }

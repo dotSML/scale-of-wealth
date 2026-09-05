@@ -16,62 +16,41 @@ export function StoryOverlay({
   if (!activeBeat) return null;
 
   return (
-    <section 
-      className={styles.overlayContainer} 
-      aria-labelledby="active-beat-title"
+    <aside 
+      className={styles.annotationContainer} 
+      aria-label="Active Comparison Annotation"
     >
-      {/* Screen reader live region announcing beat updates */}
       <div 
         className={styles.srOnly} 
         aria-live="polite" 
         aria-atomic="true"
       >
-        {activeBeat.chapterTitle}: {activeBeat.title}. {activeBeat.headline}
+        {activeBeat.title}. {activeBeat.headline}
       </div>
 
-      <article className={styles.card}>
-        <header className={styles.cardHeader}>
-          <div className={styles.chapterBadge}>
-            Chapter {activeBeat.chapter}: {activeBeat.chapterTitle}
-          </div>
-          <div className={styles.beatCounter}>
-            Beat {activeBeat.index} of 30
-          </div>
-        </header>
+      <article className={styles.annotation}>
+        {/* Main Number or Title */}
+        <h2 className={styles.primaryNumber}>
+          {activeBeat.comparisonLabel || activeBeat.headline}
+        </h2>
 
-        <h1 id="active-beat-title" className={styles.title}>
-          {activeBeat.title}
-        </h1>
+        {/* Short, crisp ~25 word caption */}
+        <p className={styles.caption}>
+          {activeBeat.shortCaption || activeBeat.headline}
+        </p>
 
-        <div className={styles.headline}>
-          {activeBeat.headline}
-        </div>
-
-        <div className={styles.copy}>
-          {activeBeat.copy.map((paragraph, idx) => (
-            <p key={idx}>{paragraph}</p>
-          ))}
-        </div>
-
-        {activeBeat.derivedMetric && (
-          <div className={styles.metricCallout}>
-            <span className={styles.metricLabel}>{activeBeat.derivedMetric.label}</span>
-            <span className={styles.metricValue}>{activeBeat.derivedMetric.valueString}</span>
-            <span className={styles.metricFormula}>{activeBeat.derivedMetric.calculationDetails}</span>
-          </div>
-        )}
-
-        <footer className={styles.cardFooter}>
+        {/* Small, discreet source link */}
+        <div className={styles.sourceRow}>
           <button 
             type="button" 
-            className={styles.citationLink}
+            className={styles.sourceLink}
             onClick={onOpenCitation}
             aria-haspopup="dialog"
           >
-            Source: {activeBeat.citation.label} ({activeBeat.citation.date}) &rarr;
+            {activeBeat.citation.label} · Source &rarr;
           </button>
-        </footer>
+        </div>
       </article>
-    </section>
+    </aside>
   );
 }

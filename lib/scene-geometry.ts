@@ -34,6 +34,9 @@ export interface SceneLayout {
   beats: StoryBeat[];
 }
 
+// Module-level layout cache for stable object identity
+const layoutCache = new Map<string, SceneLayout>();
+
 /**
  * Calculates layout for a scene based on orientation.
  */
@@ -42,6 +45,10 @@ export function getSceneLayout(
   orientation: LayoutOrientation = 'horizontal',
   segmentMaxPixels = SEGMENT_MAX_PIXELS
 ): SceneLayout {
+  const cacheKey = `${sceneId}-${orientation}-${segmentMaxPixels}`;
+  const cached = layoutCache.get(cacheKey);
+  if (cached) return cached;
+
   const sceneDef = SCENES[sceneId];
   const allBeats = getStoryBeats();
   const sceneBeats = allBeats.filter((b) => b.parentSceneId === sceneId);
@@ -52,10 +59,15 @@ export function getSceneLayout(
 
   if (orientation === 'horizontal') {
     corridorCrossDimension = DESKTOP_CORRIDOR_HEIGHT;
-    totalPixels = totalArea / DESKTOP_CORRIDOR_HEIGHT;
   } else {
     corridorCrossDimension = MOBILE_CORRIDOR_WIDTH;
-    totalPixels = totalArea / MOBILE_CORRIDOR_WIDTH;
+  }
+
+  if (sceneDef.isCorridor) {
+    totalPixels = totalArea / corridorCrossDimension;
+  } else {
+    // Authored layout length for scenes with authored spacing
+    totalPixels = sceneDef.editorialLengthPx;
   }
 
   // Segment calculation
@@ -84,7 +96,7 @@ export function getSceneLayout(
     cumulativePixels = endPx;
   }
 
-  return {
+  const layout: SceneLayout = {
     sceneId,
     totalUSD: sceneDef.totalUSD,
     totalPixels,
@@ -92,6 +104,9 @@ export function getSceneLayout(
     segments,
     beats: sceneBeats,
   };
+
+  layoutCache.set(cacheKey, layout);
+  return layout;
 }
 
 /**
@@ -102,11 +117,24 @@ export function usdToScenePixel(
   sceneId: SceneId,
   orientation: LayoutOrientation = 'horizontal'
 ): number {
-  const area = dollarsToArea(usd);
-  if (orientation === 'horizontal') {
-    return area / DESKTOP_CORRIDOR_HEIGHT;
+  const sceneDef = SCENES[sceneId];
+  if (sceneDef.isCorridor) {
+    const area = dollarsToArea(usd);
+    if (orientation === 'horizontal') {
+      return area / DESKTOP_CORRIDOR_HEIGHT;
+    }
+    return area / MOBILE_CORRIDOR_WIDTH;
   }
-  return area / MOBILE_CORRIDOR_WIDTH;
+
+  // For authored scenes, check if there is a matching beat
+  const beats = getStoryBeats().filter((b) => b.parentSceneId === sceneId);
+  const exactBeat = beats.find((b) => Math.abs(b.offsetInParentUSD - usd) < 1);
+  if (exactBeat) {
+    return exactBeat.editorialPlacementPx;
+  }
+
+  const fraction = Math.max(0, Math.min(1, usd / sceneDef.totalUSD));
+  return fraction * sceneDef.editorialLengthPx;
 }
 
 /**
@@ -117,9 +145,22 @@ export function scenePixelToUSD(
   sceneId: SceneId,
   orientation: LayoutOrientation = 'horizontal'
 ): number {
-  const crossDimension = orientation === 'horizontal' ? DESKTOP_CORRIDOR_HEIGHT : MOBILE_CORRIDOR_WIDTH;
-  const area = pixel * crossDimension;
-  return area * 1_000;
+  const sceneDef = SCENES[sceneId];
+  if (sceneDef.isCorridor) {
+    const crossDimension = orientation === 'horizontal' ? DESKTOP_CORRIDOR_HEIGHT : MOBILE_CORRIDOR_WIDTH;
+    const area = pixel * crossDimension;
+    return area * 1_000;
+  }
+
+  const beats = getStoryBeats().filter((b) => b.parentSceneId === sceneId);
+  for (const beat of beats) {
+    if (pixel >= beat.visibleRangePx[0] && pixel <= beat.visibleRangePx[1]) {
+      return beat.offsetInParentUSD;
+    }
+  }
+
+  const fraction = Math.max(0, Math.min(1, pixel / sceneDef.editorialLengthPx));
+  return fraction * sceneDef.totalUSD;
 }
 
 /**
@@ -198,3 +239,30 @@ export function getActiveBeatForOffset(
 
   return closestBeat;
 }
+
+/**
+ * Finds the currently active Story Beat for a given scroll pixel position
+ * using explicit, ordered visibility ranges.
+ */
+export function getActiveBeatForScroll(
+  sceneLayout: SceneLayout,
+  currentPixelOffset: number
+): StoryBeat | null {
+  const beats = sceneLayout.beats;
+  if (!beats || beats.length === 0) return null;
+
+  for (const beat of beats) {
+    if (
+      currentPixelOffset >= beat.visibleRangePx[0] &&
+      currentPixelOffset <= beat.visibleRangePx[1]
+    ) {
+      return beat;
+    }
+  }
+
+  if (currentPixelOffset < beats[0].visibleRangePx[0]) {
+    return beats[0];
+  }
+  return beats[beats.length - 1];
+}
+
