@@ -1,0 +1,112 @@
+{
+  "checked_on": "2026-09-06",
+  "original_commit": "788d3a82ddcfcbfdc0b25d46a3f85adcd53f3921",
+  "currency": "USD",
+  "dollars_per_square_pixel": 1000,
+  "wealth_bar_height": 500,
+  "wealth": {
+    "musk": 908200000000,
+    "bezos": 266500000000,
+    "zuckerberg": 212000000000,
+    "beyonce": 1000000000,
+    "tim_cook": 3000000000,
+    "forbes_400": 6600000000000,
+    "forbes_400_minimum": 3800000000,
+    "bottom_50_households": 4266359000000
+  },
+  "income": {
+    "median_household_2024": 83730,
+    "median_worker_2025": 50980,
+    "physician_2025": 275930,
+    "lawyer_2025": 159670,
+    "illustrative_working_years": 40,
+    "amazon_hourly_benchmark": 23,
+    "hours_per_week": 40,
+    "weeks_per_year": 52,
+    "solomon_compensation_2025": 47000000,
+    "family_insurance_premium_2025": 26993
+  },
+  "population": {
+    "households_2025": 134790000,
+    "poverty_2024": 35900000,
+    "veterans_homeless_2025": 32495,
+    "malaria_deaths_global_2024": 610000,
+    "malaria_deaths_africa_2024": 579000,
+    "malaria_africa_under5_share": 0.75,
+    "measles_deaths_global_2024": 95000,
+    "without_safe_water_2024": 2100000000,
+    "without_safe_sanitation_2024": 3400000000,
+    "world_2024": 8200000000,
+    "states_2025": {
+      "California": 39355309,
+      "Texas": 31709821,
+      "Florida": 23462518,
+      "New York": 20002427,
+      "Pennsylvania": 13059432,
+      "Illinois": 12719141,
+      "Ohio": 11900510
+    }
+  },
+  "spending": {
+    "nci_2026": 7350000000,
+    "humanitarian_2026_launch_appeal": 33000000000,
+    "malaria_annual_target_2025": 9300000000,
+    "malaria_investment_2024": 3900000000,
+    "illustrative_veteran_annual_grant": 24000,
+    "illustrative_poverty_grant": 10000,
+    "illustrative_water_fund": 200000000000,
+    "small_household_grant": 1200,
+    "large_household_grant": 10000,
+    "cancer_years": 10,
+    "malaria_years": 10
+  },
+  "final_bundle": [
+    "large_household_grant",
+    "humanitarian_2026_launch_appeal",
+    "malaria_decade",
+    "illustrative_water_fund",
+    "cancer_decade"
+  ],
+  "sources": {
+    "income": "https://www.census.gov/library/publications/2025/demo/p60-286.html",
+    "musk": "https://www.forbes.com/profile/elon-musk/",
+    "bezos": "https://www.forbes.com/profile/jeff-bezos/",
+    "zuck": "https://www.forbes.com/profile/mark-zuckerberg/",
+    "beyonce": "https://www.forbes.com/profile/beyonce-knowles-carter/",
+    "cook": "https://www.forbes.com/profile/tim-cook/",
+    "four": "https://www.forbes.com/sites/chasewithorn/2025/09/09/the-2025-forbes-400-list-of-wealthiest-americans-facts-and-figures/",
+    "bottom": "https://fred.stlouisfed.org/series/WFRBLB50107",
+    "households": "https://fred.stlouisfed.org/series/TTLHH",
+    "wage": "https://www.bls.gov/ooh/legal/lawyers.htm",
+    "doctor": "https://www.bls.gov/ooh/healthcare/physicians-and-surgeons.htm",
+    "premium": "https://www.kff.org/health-costs/2025-employer-health-benefits-survey/",
+    "amazon": "https://www.aboutamazon.com/news/workplace/amazon-wage-increase-2025-fulfillment-transportation-employees",
+    "veterans": "https://department.va.gov/homeless/point-in-time-pit-count/",
+    "nci": "https://www.cancer.gov/about-nci/budget",
+    "solomon": "https://www.goldmansachs.com/investor-relations/financials/8k/2026/8k-01-23-26.pdf",
+    "aid": "https://www.unocha.org/news/life-life-un-launches-us33-billion-aid-appeal-urgent-call-global-solidarity",
+    "malaria": "https://www.who.int/news-room/fact-sheets/detail/malaria",
+    "malaria_budget": "https://www.who.int/news/item/04-12-2025-new-tools-saved-a-million-lives-from-malaria-last-year-but-progress-under-threat-as-drug-resistance-rises",
+    "malaria_report": "https://www.who.int/teams/global-malaria-programme/reports/world-malaria-report-2025",
+    "measles": "https://www.who.int/news-room/fact-sheets/detail/measles",
+    "poverty": "https://www.census.gov/library/publications/2025/demo/p60-287.html",
+    "states": "https://www.statsamerica.org/sip/rank_list.aspx?rank_label=pop1",
+    "water": "https://www.who.int/news/item/26-08-2025-1-in-4-people-globally-still-lack-access-to-safe-drinking-water---who--unicef",
+    "wash": "https://www.who.int/news/item/26-01-2026-new-un-water-findings--stronger-wash-systems-needed-for-safe-drinking-water--sanitation-and-hygiene-for-all",
+    "cash": "https://www.givedirectly.org/research-on-cash-transfers/",
+    "world_population": "https://www.who.int/publications/m/item/progress-on-household-drinking-water--sanitation-and-hygiene-2000-2024--special-focus-on-inequalities"
+  },
+  "derived": {
+    "malaria_africa_under5": 434250.0,
+    "pie_costs": [
+      33000000000.0,
+      93000000000.0,
+      161748000000,
+      359000000000,
+      73500000000.0,
+      200000000000.0,
+      1347900000000
+    ],
+    "final_total": 1747400000000.0
+  }
+}
