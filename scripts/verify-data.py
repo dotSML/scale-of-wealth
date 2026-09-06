@@ -206,6 +206,17 @@ close(group_total('decade-', 'value'), inputs['spending_years'] * inputs['illust
 close(inputs['musk'], W['musk'], 'same fortune throughout')
 assert '871.7 billion' in english['i18n-musk-spend-after']
 assert '0.0029%' in english['i18n-musk-civic-thousand']
+normalized_cars = civic_price * inputs['civic_sample_quantity'] / W['musk'] * 1000
+assert 0 < normalized_cars < 0.03
+assert 'less than 3 cents' in english['i18n-musk-more-perspective']
+for key, cost in [('i18n-musk-cars-after', civic_price * inputs['civic_large_quantity']),
+                  ('i18n-musk-homes-after', inputs['homes'] * inputs['illustrative_home_price'])]:
+    assert f'{(1 - cost / W["musk"]) * 100:.1f}%' in english[key]
+    checks += 1
+bound_wealth = [float(node['attrs']['data-wealth']) for node in page.nodes if 'data-wealth' in node['attrs']]
+assert bound_wealth == [W['musk'], W['forbes_400']]
+bound_children = next(node['attrs']['data-count'] for node in page.nodes if node['attrs'].get('id') == 'babies-wrapper')
+close(float(bound_children), under_five, 'child counter maximum')
 
 # Fixed money geometry must fit without shrinking the original introduction.
 # Flexible, sticky text intervals consume all remaining width, ending at Musk's edge.
