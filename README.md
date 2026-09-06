@@ -10,6 +10,10 @@ The scale remains **$1,000 per square pixel**. Lifetime earnings illustrations a
 
 Run `python3 scripts/verify-data.py` to check the monetary areas, chart proportions, translations, and final-bundle arithmetic.
 
+The extended Musk section adds everyday purchases: 1,000 new Honda Civics bought outright, then a million cars; mortgage-free homes; prepaid rent; groceries; cleared credit-card balances; income for time away from work; and a century of spending $1 million a day. [`data/musk-comparisons-2026-09-06.json`](data/musk-comparisons-2026-09-06.json) records the prices, assumptions, quantities, and geometry. Honda's price includes destination and excludes local tax and registration. Other household budgets are explicitly hypothetical.
+
+Colored squares represent individual purchases or working lives. Repeated stripes represent weeks or years. Orange gaps are excluded from the monetary area. Sticky callouts fill the remaining space within the existing Musk rectangle; its size, ruler, scrolling, zoom, and the later Forbes 400 section remain unchanged.
+
 ## Source and license
 
 The files in `public/` were originally copied byte-for-byte from

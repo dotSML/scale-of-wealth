@@ -814,3 +814,104 @@ h1 {
 .all-of-them .title {
   width: 370px;
 }
+
+/* More comparisons inside the existing Musk rectangle. Colored areas keep
+   the original $1,000 per square pixel; orange gutters carry no value. */
+.musk-continuation {
+  flex: 1 0 0;
+  min-width: 0;
+  height: 500px;
+  display: flex;
+  align-items: center;
+  gap: 500px;
+}
+.musk-continuation .musk-scene {
+  flex: 0 0 auto;
+  position: relative;
+}
+.musk-continuation .musk-pause {
+  flex: 1 0 6000px;
+  min-width: 6000px;
+}
+.musk-continuation .musk-caption {
+  position: sticky;
+  left: 20px;
+  width: calc(100vw - 40px);
+  max-width: 420px;
+  line-height: 1.4;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+.musk-continuation .musk-pause .musk-caption {
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 390px;
+}
+.musk-continuation .musk-caption p {
+  margin: 0 0 1em;
+}
+.musk-continuation .musk-caption p:last-child {
+  margin-bottom: 0;
+}
+.musk-continuation .money-square {
+  background-color: #0661b9;
+  flex: none;
+  margin-top: 12px;
+}
+.musk-continuation .money-grid {
+  background-color: var(--money-color);
+  background-image:
+    linear-gradient(to right, transparent var(--unit-side), orange var(--unit-side)),
+    linear-gradient(to bottom, transparent var(--unit-side), orange var(--unit-side));
+  background-size: var(--unit-pitch) var(--unit-pitch);
+}
+.musk-continuation .musk-grid-caption {
+  height: 56px;
+  margin: 0;
+}
+.musk-continuation .musk-grid-caption p {
+  margin: 0;
+}
+.musk-continuation .musk-budget {
+  box-sizing: border-box;
+}
+.musk-continuation .musk-budget > .musk-caption {
+  padding: 16px 0;
+}
+.musk-continuation .musk-budget-notes {
+  display: flex;
+  height: 100%;
+}
+.musk-continuation .musk-budget-notes > div {
+  flex: 1 0 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+.musk-continuation .musk-budget-notes .musk-caption {
+  margin: 0;
+}
+.musk-continuation .musk-tiny-pointer {
+  width: 0;
+  height: 35px;
+  border-left: 1px dashed black;
+  margin-top: 12px;
+}
+.musk-continuation .musk-years {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+}
+.musk-continuation .musk-decade {
+  flex: none;
+}
+@media (max-width: 450px) {
+  .musk-continuation .musk-pause .musk-caption {
+    left: 10px;
+    transform: none;
+  }
+  .musk-continuation .musk-caption {
+    left: 10px;
+    width: 90vw;
+  }
+}

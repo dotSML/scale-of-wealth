@@ -107,7 +107,7 @@ class Page(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
-        node = {'tag': tag, 'attrs': attrs, 'text': ''}
+        node = {'tag': tag, 'attrs': attrs, 'text': '', 'parent': self.stack[-1] if self.stack else None}
         self.nodes.append(node)
         if tag not in {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}:
             self.stack.append(node)
@@ -149,4 +149,85 @@ for relative in ['public/index.html', 'public/de/index.html']:
         resource = node['attrs'].get('src') or (node['attrs'].get('href') if node['tag'] == 'link' else None)
         if resource and not re.match(r'\w+:|//', resource):
             assert (ROOT / relative).parent.joinpath(resource.split('?')[0]).is_file(), resource
-print(f'Passed {checks} data checks, seven comparison pies, both translated chart sets, and local asset checks.')
+MORE = json.loads((ROOT / 'data/musk-comparisons-2026-09-06.json').read_text())
+inputs = MORE['inputs']
+geometry = MORE['geometry']
+visuals = {node['attrs']['data-comparison']: node for node in page.nodes if 'data-comparison' in node['attrs']}
+assert len(visuals) == len(geometry)
+assert set(visuals) == {item['id'] for item in geometry}
+
+
+def inline_number(node, property):
+    style = node['attrs'].get('style', '')
+    return float(re.search(r'(?:^|;)\s*' + re.escape(property) + r':\s*([\d.]+)px', style).group(1))
+
+
+for item in geometry:
+    node = visuals[item['id']]
+    width, height = (inline_number(node, prop) for prop in ('width', 'height'))
+    close(float(node['attrs']['data-money']), item['value'], item['id'] + ' declared value')
+    close(item['units'] * item['unit_value'], item['value'], item['id'] + ' unit total')
+    if item['kind'] == 'grid':
+        side, pitch = (inline_number(node, prop) for prop in ('--unit-side', '--unit-pitch'))
+        rows, columns = (int(node['attrs'][prop]) for prop in ('data-rows', 'data-columns'))
+        assert rows * columns == item['units'] == int(node['attrs']['data-units'])
+        close(width / pitch, columns, item['id'] + ' columns')
+        close(height / pitch, rows, item['id'] + ' rows')
+        close(pitch - side, 2, item['id'] + ' unvalued gutter')
+        close(side * side * 1000, item['unit_value'], item['id'] + ' unit area')
+        colored_area = rows * columns * side * side
+        assert height + 56 <= 440, item['id'] + ' obscures ruler'
+    elif item['kind'] == 'stripes':
+        stripe_width = float(re.search(r'transparent ([\d.]+)px', node['attrs']['style']).group(1))
+        pitch = float(re.search(r'background-size:([\d.]+)px', node['attrs']['style']).group(1))
+        close(width / pitch, item['units'], item['id'] + ' stripe count')
+        close(pitch - stripe_width, 2, item['id'] + ' unvalued gutter')
+        colored_area = item['units'] * stripe_width * height
+        assert height + 56 <= 440, item['id'] + ' obscures ruler'
+    else:
+        colored_area = width * height
+    close(colored_area * 1000, item['value'], item['id'] + ' colored area')
+
+
+def group_total(prefix, field):
+    return sum(item[field] for item in geometry if item['id'].startswith(prefix))
+
+
+civic_price = inputs['civic_2026_lx_msrp'] + inputs['civic_destination']
+close(float(visuals['thousand-civics']['attrs']['data-money']), civic_price * 1000, '1,000 cars purchased outright')
+close(group_total('cars-', 'value'), civic_price * inputs['civic_large_quantity'], 'one million cars')
+close(group_total('homes-', 'value'), inputs['homes'] * inputs['illustrative_home_price'], 'home purchases')
+close(group_total('careers-', 'value'), inputs['careers'] * inputs['career_years'] * inputs['median_annual_wage_2025'], 'career fields')
+close(group_total('rent-year-', 'value'), inputs['rent_households'] * inputs['rent_years'] * 12 * inputs['illustrative_monthly_rent'], 'ten years of rent')
+close(group_total('food-', 'value'), inputs['grocery_households'] * inputs['grocery_weeks'] * inputs['illustrative_weekly_groceries'], 'a year of groceries')
+close(float(visuals['million-debts']['attrs']['data-money']), inputs['debt_balances'] * inputs['illustrative_debt_balance'], 'credit-card balances')
+close(group_total('time-off-', 'value'), inputs['year_off_recipients'] * inputs['illustrative_year_off_grant'], 'time-off grants')
+close(group_total('decade-', 'value'), inputs['spending_years'] * inputs['illustrative_days_per_year'] * inputs['daily_spending'], 'century spending')
+close(inputs['musk'], W['musk'], 'same fortune throughout')
+assert '871.7 billion' in english['i18n-musk-spend-after']
+assert '0.0029%' in english['i18n-musk-civic-thousand']
+
+# Fixed money geometry must fit without shrinking the original introduction.
+# Flexible, sticky text intervals consume all remaining width, ending at Musk's edge.
+continuation = next(node for node in page.nodes if node['attrs'].get('class') == 'musk-continuation')
+scenes = [node for node in page.nodes if node['parent'] is continuation]
+fixed_width, pauses = 0, 0
+for scene in scenes:
+    classes = scene['attrs']['class'].split()
+    if 'musk-pause' in classes:
+        pauses += 1
+    elif 'musk-years' in classes:
+        children = [node for node in page.nodes if node['parent'] is scene]
+        fixed_width += sum(inline_number(node, 'width') for node in children) + 20 * (len(children) - 1)
+    else:
+        fixed_width += inline_number(scene, 'width')
+layout = MORE['layout']
+assert pauses == layout['pause_count'] and len(scenes) == layout['scene_count']
+required_width = fixed_width + pauses * layout['minimum_pause_width'] + (len(scenes) - 1) * layout['scene_gap']
+assert required_width + layout['preexisting_content_width_upper_bound'] < dimensions('.bezos .wealth')[0]
+assert set(MORE['translation_keys']).issubset(english.keys() & german.keys())
+for node in visuals.values():
+    label = node['attrs'].get('aria-labelledby')
+    if label:
+        assert any(candidate['attrs'].get('id') == label for candidate in page.nodes), label
+print(f'Passed {checks} data checks, {len(geometry)} new scaled visuals, both translations, layout capacity, and local assets.')
