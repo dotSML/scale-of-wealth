@@ -29,6 +29,8 @@
   var sections = [];
   var framePending = false;
   var needsMeasure = true;
+  var linkTimer = null;
+  var linkDelay = 400;
   var innerScrollers = '.people-wrapper, .babies-wrapper, .modal-inner';
   var controls = 'a, button, input, select, textarea, [contenteditable]:not([contenteditable="false"])';
 
@@ -44,13 +46,36 @@
     return element.getBoundingClientRect().left + window.scrollX;
   }
 
+  function maximumScroll() {
+    return Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
+  }
+
+  // #at=<pixels> is a durable address for one moment of the journey.
+  function followLink() {
+    var match = /^#at=(\d{1,9})$/.exec(window.location.hash);
+    if (!match) return;
+    window.scrollTo({left: clamp(Number(match[1]), 0, maximumScroll()), top: 0, behavior: 'instant'});
+  }
+
+  function updateLink() {
+    linkTimer = null;
+    var position = Math.round(clamp(window.scrollX, 0, maximumScroll()));
+    var hash = position > 2 ? '#at=' + position : '';
+    if (window.location.hash === hash) return;
+    try {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search + hash);
+    } catch (error) {
+      // Browsers cap history writes; reading must never depend on them.
+    }
+  }
+
   function measure() {
     var candidates = document.querySelectorAll(
       '.title-screen, .wealth-row > .wealth-wrapper:not(.bezos):not(.four-hundred), ' +
       '#bezos, #four-hundred > .wealth, .infobox, ' +
       '.musk-scene:not(.musk-years), .musk-decade'
     );
-    var maximum = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
+    var maximum = maximumScroll();
     stops = Array.from(candidates, function (element) {
       return {element: element, left: clamp(absoluteLeft(element) - 20, 0, maximum)};
     }).sort(function (a, b) { return a.left - b.left; }).filter(function (stop, index, list) {
@@ -162,10 +187,16 @@
 
   previous.addEventListener('click', function () { navigate(-1); });
   next.addEventListener('click', function () { navigate(1); });
-  window.addEventListener('scroll', schedule, {passive: true});
+  window.addEventListener('scroll', function () {
+    schedule();
+    // One history write after the reader stops, not one per frame.
+    if (linkTimer) window.clearTimeout(linkTimer);
+    linkTimer = window.setTimeout(updateLink, linkDelay);
+  }, {passive: true});
   window.addEventListener('resize', function () { schedule(true); updatePeople(); updateBabies(); });
   window.addEventListener('load', function () { schedule(true); });
   window.addEventListener('pageshow', function () { schedule(true); });
+  window.addEventListener('hashchange', function () { followLink(); schedule(); });
 
   var figures = document.createDocumentFragment();
   for (var i = 0; i < 100; i++) {
@@ -183,7 +214,7 @@
 
   function updateBabies() {
     var tile = window.innerWidth <= 450 ? 68 : 160;
-    var count = clamp(Math.floor(babies.scrollTop / tile * 5), 0, Number(babies.dataset.count));
+    var count = clamp(Math.floor(babies.scrollTop / tile * 5), 0, Number(babies.dataset.count) || 0);
     setText(babyCounter, number.format(count));
   }
 
@@ -194,6 +225,7 @@
   nav.hidden = false;
   nav.setAttribute('aria-label', copy.navigation);
   document.body.classList.add('journey-ready');
+  followLink();
   schedule(true);
 }());
 
