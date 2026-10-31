@@ -7,15 +7,29 @@ const root = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'public/main.js'), 'utf8');
 const german = fs.readFileSync(path.join(root, 'public/de/i18n_de.js'), 'utf8');
 
-function fixture(language = 'en') {
+function fixture(language = 'en', options = {}) {
   const listeners = {};
   const frames = [];
+  const timers = new Map();
   const nodes = {};
   const movements = [];
+  let timerId = 0;
   const window = {
     innerWidth: 1000, innerHeight: 900, scrollX: 0, scrollY: 0,
+    location: {hash: options.hash || '', pathname: options.pathname || '/', search: ''},
+    history: {
+      calls: [],
+      replaceState(state, title, url) {
+        this.calls.push(url);
+        const [path, hash = ''] = String(url).split('#');
+        if (path) window.location.pathname = path;
+        window.location.hash = hash ? '#' + hash : '';
+      }
+    },
     addEventListener(name, callback) { (listeners[name] ||= []).push(callback); },
     requestAnimationFrame(callback) { frames.push(callback); },
+    setTimeout(callback) { timers.set(++timerId, callback); return timerId; },
+    clearTimeout(id) { timers.delete(id); },
     scrollTo(options) {
       movements.push(options);
       this.scrollX = Math.max(0, Math.min(options.left, document.documentElement.scrollWidth - this.innerWidth));
@@ -79,6 +93,11 @@ function fixture(language = 'en') {
   vm.runInContext(source, context);
   function flush() { while (frames.length) frames.shift()(); }
   flush();
+  function flushTimers() {
+    const pending = [...timers.values()];
+    timers.clear();
+    for (const callback of pending) callback();
+  }
   function wheel(overrides = {}) {
     const event = {deltaX: 0, deltaY: 120, deltaMode: 0, target: {}, prevented: false,
       preventDefault() { this.prevented = true; }, ...overrides};
@@ -93,7 +112,7 @@ function fixture(language = 'en') {
     return event;
   }
   function at(left) { window.scrollX = left; window.dispatch('scroll'); flush(); }
-  return {window, document, nodes, candidates, context, movements, frames, flush, wheel, key, at};
+  return {window, document, nodes, candidates, context, movements, frames, flush, flushTimers, wheel, key, at};
 }
 
 test('next/back visit every distinct example, announce it, and restart at the last one', () => {
@@ -225,6 +244,39 @@ test('German controls, money, percentages, and zoom state are localized', () => 
   assert.equal(f.nodes['zoom-toggle'].attrs['aria-pressed'], 'true');
   vm.runInContext('toggleZoom()', f.context);
   assert.equal(f.nodes['zoom-toggle'].attrs['aria-pressed'], 'false');
+});
+
+test('a shared address opens the journey at that spot', () => {
+  const spot = fixture('en', {hash: '#at=5000000'});
+  assert.equal(spot.window.scrollX, 5000000);
+  assert.equal(spot.movements[0].behavior, 'instant');
+  const far = fixture('en', {hash: '#at=999999999'});
+  assert.equal(far.window.scrollX, far.document.documentElement.scrollWidth - far.window.innerWidth);
+  const broken = fixture('en', {hash: '#at=nonsense'});
+  assert.equal(broken.window.scrollX, 0);
+  assert.equal(broken.movements.length, 0);
+});
+
+test('the stopped position is written once, and cleared again at the opening', () => {
+  const f = fixture();
+  f.at(4321);
+  f.flushTimers();
+  assert.equal(f.window.location.hash, '#at=4321');
+  assert.deepEqual(f.window.history.calls, ['/#at=4321']);
+  f.at(60); f.at(70); f.at(80);
+  f.flushTimers();
+  assert.deepEqual(f.window.history.calls, ['/#at=4321', '/#at=80']);
+  f.at(0);
+  f.flushTimers();
+  assert.equal(f.window.location.hash, '');
+  assert.deepEqual(f.window.history.calls, ['/#at=4321', '/#at=80', '/']);
+});
+
+test('editing the address moves the reader instead of waiting for a reload', () => {
+  const f = fixture();
+  f.window.location.hash = '#at=120000';
+  f.window.dispatch('hashchange');
+  assert.equal(f.window.scrollX, 120000);
 });
 
 function translationFixture() {
